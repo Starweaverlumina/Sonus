@@ -116,6 +116,15 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .bank-list-item.active-bank{border-color:var(--accent3)}.bank-list-name{font-size:15px;font-weight:600;flex:1;cursor:pointer}.bank-list-count{font-size:12px;color:var(--text2);margin:0 12px}
 .bank-list-delete{width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,61,113,.15);color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
+/* ═══ ★ PAD WAVEFORM PREVIEW ═══ */
+.pad-wave{position:absolute;left:6px;right:6px;bottom:3px;height:16px;opacity:.4;z-index:0;pointer-events:none;object-fit:fill}
+
+/* ═══ ★ VOICE CHANGER ═══ */
+.vfx-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
+.vfx-group-label{margin:10px 0 6px;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.vfx-pitch-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.vfx-pitch-row .vfx-pitch-val{font-size:13px;font-weight:700;color:var(--accent2);font-variant-numeric:tabular-nums}
+
 /* ═══ ★ CHOPPER ═══ */
 .chop-wrapper{position:relative;margin:16px 0;background:var(--surface2);border-radius:14px;overflow:hidden;border:1.5px solid var(--surface3)}
 .chop-canvas{width:100%;height:140px;display:block;cursor:crosshair;touch-action:none}
@@ -227,6 +236,44 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="modal-actions"><button class="cancel-btn" id="chopClose">Close</button></div>
   </div></div>
 
+  <!-- ★ VOICE CHANGER MODAL -->
+  <div class="modal-overlay" id="voiceFxModal"><div class="modal" style="max-width:600px">
+    <h2>🎭 Voice Changer</h2>
+    <div class="modal-sub">Record your voice or pick a sound from your library, then shape it with pitch and preset voices.</div>
+    <div id="vfxSourcePicker">
+      <button class="action-btn" id="vfxRecordBtn" style="height:52px;border-radius:14px;background:var(--accent);color:#fff;margin-bottom:12px;width:100%"><span>⏺</span> Record Voice</button>
+      <div style="text-align:center;padding:6px 0;color:var(--text2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px">— or —</div>
+      <div style="text-align:center;margin-bottom:8px;font-size:13px;color:var(--text2)">Pick an existing sound from your library</div>
+      <div id="vfxLibraryList" style="max-height:200px;overflow-y:auto;border:1.5px solid var(--surface3);border-radius:14px;background:var(--surface2)"></div>
+    </div>
+    <div id="vfxEditor" style="display:none">
+      <div class="chop-wrapper">
+        <canvas class="chop-canvas" id="vfxCanvas"></canvas>
+        <div class="chop-info"><span id="vfxSourceName"></span><span id="vfxDuration">0:00</span></div>
+      </div>
+      <div class="modal-field">
+        <div class="vfx-pitch-row"><label>Pitch</label><span class="vfx-pitch-val" id="vfxPitchVal">0 st</span></div>
+        <input type="range" id="vfxPitch" min="-12" max="12" step="1" value="0">
+      </div>
+      <div class="modal-field">
+        <label>Presets</label>
+        <div class="vfx-group-label">Funny</div>
+        <div class="vfx-presets" id="vfxPresetsFunny"></div>
+        <div class="vfx-group-label">Iconic Styles</div>
+        <div class="vfx-presets" id="vfxPresetsIconic"></div>
+        <div class="vfx-group-label">Wildcard</div>
+        <div class="vfx-presets" id="vfxPresetsRandom"></div>
+      </div>
+      <div class="kv"><div class="modal-field"><label>Bank</label><select id="vfxBank"></select></div><div class="modal-field"><label>Name</label><input type="text" id="vfxName" placeholder="Voice clip name"></div></div>
+      <div class="chop-controls">
+        <button class="chop-btn" id="vfxPreview">▶ Preview</button>
+        <button class="chop-btn primary" id="vfxSave">💾 Save as Pad</button>
+        <button class="chop-btn" id="vfxNewSource">↺ New Source</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="cancel-btn" id="vfxClose">Close</button></div>
+  </div></div>
+
   <!-- Edit Modal -->
   <div class="modal-overlay" id="editModal"><div class="modal">
     <h2>Edit Sound</h2>
@@ -251,10 +298,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
   </div></div>
 
   <!-- Voice Help -->
-  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
+  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div><div class="help-section"><div class="help-section-title">Keyboard</div><span class="cmd">1–9, 0</span> play pad by number &nbsp; <span class="cmd">Esc</span> stop all / close</div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
 
   <!-- Settings -->
   <div class="modal-overlay" id="settingsModal"><div class="modal"><h2>Settings</h2><div class="settings-grid">
+    <div class="settings-row" id="voiceFxSettingsBtn"><span class="settings-row-icon">🎭</span><div class="settings-row-info"><div class="settings-row-title">Voice Changer</div><div class="settings-row-desc">Record or transform a sound with pitch FX</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="manageBanksBtn"><span class="settings-row-icon">📂</span><div class="settings-row-info"><div class="settings-row-title">Manage Banks</div><div class="settings-row-desc">Create, rename, delete</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="exportBtn"><span class="settings-row-icon">📤</span><div class="settings-row-info"><div class="settings-row-title">Export</div><div class="settings-row-desc">Download .sounddeck backup</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="importBtn"><span class="settings-row-icon">📥</span><div class="settings-row-info"><div class="settings-row-title">Import</div><div class="settings-row-desc">Restore from backup</div></div><span class="settings-row-arrow">›</span></div>
@@ -288,10 +336,19 @@ const Storage=(()=>{let db=null;
   return{open,loadAllMeta:()=>p(tx(CONFIG.STORE_META,'readonly').getAll()),saveMeta:m=>p(tx(CONFIG.STORE_META,'readwrite').put(m)),deleteMeta:id=>p(tx(CONFIG.STORE_META,'readwrite').delete(id)),saveAudio:(id,blob)=>p(tx(CONFIG.STORE_AUDIO,'readwrite').put({id,blob})),loadAudio:async id=>{const r=await p(tx(CONFIG.STORE_AUDIO,'readonly').get(id));return r?r.blob:null},deleteAudio:id=>p(tx(CONFIG.STORE_AUDIO,'readwrite').delete(id)),clearAll:async()=>{await p(tx(CONFIG.STORE_META,'readwrite').clear());await p(tx(CONFIG.STORE_AUDIO,'readwrite').clear())},loadBanks:()=>p(tx(CONFIG.STORE_BANKS,'readonly').getAll()),saveBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').put({name})),deleteBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').delete(name)),getStorageEstimate:async()=>{if(navigator.storage?.estimate){const e=await navigator.storage.estimate();return{usage:e.usage||0,quota:e.quota||0}}return{usage:0,quota:0}}};
 })();
 
+// ═══ ★ PAD WAVEFORM THUMBNAILS ═══
+const WaveThumb=(()=>{const cache=new Map();
+  function generate(id,buffer){if(!buffer)return null;const W=120,H=28,c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');const data=buffer.getChannelData(0),step=Math.max(1,Math.ceil(data.length/W));ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.beginPath();const mid=H/2;for(let x=0;x<W;x++){const idx=x*step;let mn=0,mx=0;for(let j=0;j<step&&idx+j<data.length;j++){const v=data[idx+j];if(v<mn)mn=v;if(v>mx)mx=v}ctx.moveTo(x,mid+mn*mid*.9);ctx.lineTo(x,mid+mx*mid*.9)}ctx.stroke();const url=c.toDataURL('image/png');cache.set(id,url);return url}
+  function get(id){return cache.get(id)||''}
+  function remove(id){cache.delete(id)}
+  function clear(){cache.clear()}
+  return{generate,get,remove,clear};
+})();
+
 // ═══ AUDIO ENGINE ═══
 const AudioEngine=(()=>{let ctx=null;
   function getContext(){if(!ctx||ctx.state==='closed')ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx}
-  async function decode(id,blob){try{const buf=await getContext().decodeAudioData(await blob.arrayBuffer());AppState.decodedBuffers.set(id,buf);return buf}catch(e){return null}}
+  async function decode(id,blob){try{const buf=await getContext().decodeAudioData(await blob.arrayBuffer());AppState.decodedBuffers.set(id,buf);WaveThumb.generate(id,buf);return buf}catch(e){return null}}
   async function getBuffer(id){if(AppState.decodedBuffers.has(id))return AppState.decodedBuffers.get(id);const b=await Storage.loadAudio(id);return b?decode(id,b):null}
   async function play(id,vol=.8,loop=false){if(AppState.playing.size>=CONFIG.MAX_CONCURRENT||AppState.playing.has(id))return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(c.destination);src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});return true}
   function stop(id){const e=AppState.playing.get(id);if(e){try{e.source.stop()}catch(x){}AppState.playing.delete(id)}}
@@ -533,6 +590,168 @@ const Chopper=(()=>{
   return{open,loadFile,loadFromLibrary,previewSelection,saveRegionFromSelection,autoSplit,previewRegion,removeRegion,reset,setupCanvasEvents};
 })();
 
+// ═══ ★ VOICE CHANGER ═══
+// Pitch is shifted by resampling (changes speed + pitch together, like classic
+// chipmunk/deep-voice effects). Preset "Iconic Styles" are generic broadcast/
+// performance archetypes (movie trailer, radio DJ, news anchor) — not any real,
+// identifiable person — so this never impersonates anyone specific.
+const VoiceFX=(()=>{
+  let buffer=null,sourceName='',mr=null,chunks=[],processed=null;
+  const PRESETS={
+    funny:[{name:'Chipmunk',icon:'🐿️',pitch:8},{name:'Deep Troll',icon:'👹',pitch:-9},{name:'Robot',icon:'🤖',pitch:-1,robot:true}],
+    iconic:[{name:'Movie Trailer',icon:'🎬',pitch:-5},{name:'Radio DJ',icon:'📻',pitch:-2},{name:'News Anchor',icon:'🎙️',pitch:-1}],
+    random:[{name:'Surprise Me',icon:'🎲',random:true}]
+  };
+
+  function open(){
+    AudioEngine.stopPreview();buffer=null;sourceName='';processed=null;
+    document.getElementById('vfxEditor').style.display='none';
+    document.getElementById('vfxSourcePicker').style.display='';
+    document.getElementById('voiceFxModal').classList.add('open');
+    UI.updateBankSelects();
+    renderLibraryPicker();renderPresetButtons();
+  }
+
+  function renderLibraryPicker(){
+    const list=document.getElementById('vfxLibraryList');
+    const sounds=AppState.sounds.filter(s=>AppState.decodedBuffers.has(s.id));
+    if(!sounds.length){list.innerHTML='<div class="lib-pick-empty">No sounds in library yet</div>';return}
+    list.innerHTML=sounds.map(s=>{const buf=AppState.decodedBuffers.get(s.id);const dur=buf?buf.duration.toFixed(1)+'s':'';return`<div class="lib-pick-item" data-id="${s.id}"><div class="lp-icon pad-${s.color}">${s.icon}</div><span class="lp-name">${s.name}</span><span class="lp-dur">${dur}</span></div>`}).join('');
+  }
+
+  function renderPresetButtons(){
+    const mk=g=>p=>`<button class="chop-btn vfx-preset-btn" data-group="${g}" data-name="${p.name}">${p.icon} ${p.name}</button>`;
+    document.getElementById('vfxPresetsFunny').innerHTML=PRESETS.funny.map(mk('funny')).join('');
+    document.getElementById('vfxPresetsIconic').innerHTML=PRESETS.iconic.map(mk('iconic')).join('');
+    document.getElementById('vfxPresetsRandom').innerHTML=PRESETS.random.map(mk('random')).join('');
+  }
+
+  async function loadFromLibrary(soundId){
+    const srcBuffer=await AudioEngine.getBuffer(soundId);
+    if(!srcBuffer){UI.showToast('Audio not found');return}
+    const s=AppState.sounds.find(x=>x.id===soundId);
+    const ctx=AudioEngine.getContext();
+    const clone=ctx.createBuffer(srcBuffer.numberOfChannels,srcBuffer.length,srcBuffer.sampleRate);
+    for(let ch=0;ch<srcBuffer.numberOfChannels;ch++)clone.getChannelData(ch).set(srcBuffer.getChannelData(ch));
+    buffer=clone;sourceName=s?.name||'Sound';enterEditor();
+  }
+
+  async function record(){
+    const btn=document.getElementById('vfxRecordBtn');
+    if(mr&&mr.state==='recording'){mr.stop();return}
+    VoiceEngine.pause();
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks=[];mr=new MediaRecorder(stream);
+      mr.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+      mr.onstop=async()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        btn.innerHTML='<span>⏺</span> Record Voice';btn.classList.remove('recording');
+        VoiceEngine.resume();
+        try{buffer=await AudioProcessing.decodeFile(new File([new Blob(chunks,{type:'audio/webm'})],'rec.webm',{type:'audio/webm'}));sourceName='My Voice';enterEditor()}
+        catch(e){UI.showToast('Could not process recording')}
+      };
+      mr.start();btn.innerHTML='<span>⏹</span> Stop';btn.classList.add('recording');
+    }catch(e){
+      if(e.name==='NotAllowedError')UI.showToast('Mic blocked — allow microphone access');
+      else if(e.name==='NotFoundError')UI.showToast('No microphone found');
+      else UI.showToast('Mic error: '+e.message);
+      VoiceEngine.resume();
+    }
+  }
+
+  function enterEditor(){
+    document.getElementById('vfxSourcePicker').style.display='none';
+    document.getElementById('vfxEditor').style.display='';
+    document.getElementById('vfxSourceName').textContent=sourceName;
+    document.getElementById('vfxDuration').textContent=fmtTime(buffer.duration);
+    document.getElementById('vfxName').value=`${sourceName} (Voice FX)`;
+    document.getElementById('vfxPitch').value=0;
+    document.getElementById('vfxPitchVal').textContent='0 st';
+    processed=null;drawWaveform();
+  }
+
+  function fmtTime(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${m}:${String(sec).padStart(2,'0')}`}
+
+  function drawWaveform(){
+    const canvas=document.getElementById('vfxCanvas');
+    const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();
+    canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+    const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+    const W=rect.width,H=rect.height;
+    ctx.fillStyle='#14141f';ctx.fillRect(0,0,W,H);
+    if(!buffer)return;
+    const data=buffer.getChannelData(0),step=Math.max(1,Math.ceil(data.length/W));
+    ctx.beginPath();ctx.strokeStyle='#00e5a0';ctx.lineWidth=1;const mid=H/2;
+    for(let x=0;x<W;x++){const idx=Math.floor(x*data.length/W);let mn=0,mx=0;for(let j=0;j<step&&idx+j<data.length;j++){const v=data[idx+j];if(v<mn)mn=v;if(v>mx)mx=v}ctx.moveTo(x,mid+mn*mid*.95);ctx.lineTo(x,mid+mx*mid*.95)}
+    ctx.stroke();
+  }
+
+  // ── DSP: simple resample-based pitch shift + a couple of texture effects ──
+  function pitchShift(buf,semitones){
+    if(!semitones)return buf;
+    const rate=Math.pow(2,semitones/12),ctx=AudioEngine.getContext();
+    const newLen=Math.max(1,Math.round(buf.length/rate));
+    const out=ctx.createBuffer(buf.numberOfChannels,newLen,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){
+      const src=buf.getChannelData(c),dst=out.getChannelData(c);
+      for(let i=0;i<newLen;i++){const srcIdx=i*rate,i0=Math.floor(srcIdx),i1=Math.min(i0+1,src.length-1),frac=srcIdx-i0;dst[i]=(src[i0]||0)*(1-frac)+(src[i1]||0)*frac}
+    }
+    return out;
+  }
+  function ringMod(buf,freq=32,depth=.5){
+    const ctx=AudioEngine.getContext(),out=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){const src=buf.getChannelData(c),dst=out.getChannelData(c);for(let i=0;i<src.length;i++){const t=i/buf.sampleRate;dst[i]=src[i]*(1-depth+depth*Math.abs(Math.sin(2*Math.PI*freq*t)))}}
+    return out;
+  }
+  function bitcrush(buf,steps=20){
+    const out=AudioEngine.getContext().createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){const src=buf.getChannelData(c),dst=out.getChannelData(c);for(let i=0;i<src.length;i++)dst[i]=Math.round(src[i]*steps)/steps}
+    return out;
+  }
+
+  function currentPitch(){return parseInt(document.getElementById('vfxPitch').value,10)||0}
+  function buildFromSlider(){if(!buffer)return null;return AudioProcessing.normalize(pitchShift(buffer,currentPitch()))}
+
+  function applyPresetByName(group,name){
+    const preset=(PRESETS[group]||[]).find(p=>p.name===name);
+    if(!preset||!buffer)return;
+    let semis=preset.pitch||0,robot=!!preset.robot;
+    if(preset.random){semis=Math.round(Math.random()*20-10);robot=Math.random()<.4}
+    document.getElementById('vfxPitch').value=semis;
+    document.getElementById('vfxPitchVal').textContent=`${semis>0?'+':''}${semis} st`;
+    let out=pitchShift(buffer,semis);
+    if(robot)out=bitcrush(ringMod(out,32+Math.random()*20,.5),20);
+    processed=AudioProcessing.normalize(out);
+    AudioEngine.stopPreview();AudioEngine.previewBuffer(processed);
+  }
+
+  function onPitchInput(){const v=currentPitch();document.getElementById('vfxPitchVal').textContent=`${v>0?'+':''}${v} st`;processed=null}
+
+  function preview(){if(!buffer)return;processed=buildFromSlider();AudioEngine.stopPreview();if(processed)AudioEngine.previewBuffer(processed)}
+
+  async function save(){
+    if(!buffer){UI.showToast('Load a sound first');return}
+    const out=processed||buildFromSlider();
+    if(!out){UI.showToast('Nothing to save');return}
+    const blob=AudioProcessing.encodeWAV(AudioProcessing.fadeInOut(out));
+    const name=document.getElementById('vfxName').value.trim()||`${sourceName} (Voice FX)`;
+    const bank=document.getElementById('vfxBank').value||AppState.activeBank;
+    const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+    const order=AppState.sounds.filter(s=>(s.bank||'Main')===bank).length;
+    const meta={id,name,icon:'🎭',category:'Voice',color:CONFIG.PAD_COLORS[Math.floor(Math.random()*CONFIG.PAD_COLORS.length)].name,volume:80,bank,order,loopDefault:false};
+    await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);await AudioEngine.decode(id,blob);
+    AppState.sounds.push(meta);UI.renderBanks();UI.renderCategories();UI.renderGrid();
+    UI.showToast(`Saved "${name}"`);close();
+  }
+
+  function newSource(){AudioEngine.stopPreview();buffer=null;processed=null;document.getElementById('vfxEditor').style.display='none';document.getElementById('vfxSourcePicker').style.display='';renderLibraryPicker()}
+
+  function close(){AudioEngine.stopPreview();if(mr&&mr.state==='recording'){try{mr.stop()}catch(e){}}document.getElementById('voiceFxModal').classList.remove('open')}
+
+  return{open,close,record,loadFromLibrary,preview,save,newSource,applyPresetByName,onPitchInput};
+})();
+
 // ═══ VOICE ENGINE ═══
 const VoiceEngine=(()=>{let recognition=null,supported=false,lastP='',pTimeout=null,sTimer=null,tCountdown=null;
   function init(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){document.getElementById('voiceToggle').classList.add('disabled');return}supported=true;recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';recognition.maxAlternatives=3;recognition.onresult=handleResult;recognition.onend=()=>{if(AppState.voiceActive)try{recognition.start()}catch(e){}};recognition.onerror=e=>{if(e.error==='not-allowed'){UI.showToast('Mic permission denied — check browser settings');toggle(false)}else if(AppState.voiceActive&&e.error!=='aborted')setTimeout(()=>{if(AppState.voiceActive)try{recognition.start()}catch(e){}},500)}}
@@ -766,14 +985,14 @@ const UI={
   getFilteredSounds(){let l=this.getSoundsForBank();if(AppState.activeCategory!=='All')l=l.filter(s=>s.category===AppState.activeCategory);if(AppState.searchQuery){const q=AppState.searchQuery.toLowerCase();l=l.filter(s=>s.name.toLowerCase().includes(q))}return l},
   renderBanks(){document.getElementById('bankBar').innerHTML=AppState.banks.map(b=>`<button class="bank-tab ${b===AppState.activeBank?'active':''}" data-bank="${b}">${b}<span class="bank-count">${AppState.sounds.filter(s=>(s.bank||'Main')===b).length}</span></button>`).join('')+'<button class="bank-add-btn" id="bankAddQuick">+</button>'},
   renderCategories(){const cats=new Set(['All']);this.getSoundsForBank().forEach(s=>cats.add(s.category));document.getElementById('categories').innerHTML=[...cats].map(c=>`<button class="cat-chip ${c===AppState.activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join('')},
-  renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}"><span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span><span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
+  renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}">${WaveThumb.get(s.id)?`<img class="pad-wave" src="${WaveThumb.get(s.id)}" alt="">`:''}<span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span><span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
   initSortable(){this.destroySortable();AppState.sortableInstance=new Sortable(document.getElementById('soundGrid'),{animation:200,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',delay:100,delayOnTouchOnly:true,onEnd:async evt=>{if(evt.oldIndex===evt.newIndex)return;const pads=[...document.getElementById('soundGrid').querySelectorAll('.sound-pad')];for(let i=0;i<pads.length;i++){const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);if(s){s.order=i;await Storage.saveMeta(s)}}AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));this.renderGrid()}})},
   destroySortable(){if(AppState.sortableInstance){AppState.sortableInstance.destroy();AppState.sortableInstance=null}},
-  updateBankSelects(){['uploadBank','editBank','chopBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
+  updateBankSelects(){['uploadBank','editBank','chopBank','vfxBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
   setupColorSelect(){document.getElementById('editColor').innerHTML=CONFIG.PAD_COLORS.map(c=>`<option value="${c.name}">${c.name[0].toUpperCase()+c.name.slice(1)}</option>`).join('')},
   async openEditModal(id){const s=AppState.sounds.find(x=>x.id===id);if(!s)return;AppState.editingSoundId=id;document.getElementById('editName').value=s.name;document.getElementById('editIcon').value=s.icon;document.getElementById('editColor').value=s.color;document.getElementById('editVolume').value=s.volume||80;document.getElementById('editLoopDefault').value=s.loopDefault?'1':'0';this.updateBankSelects();document.getElementById('editBank').value=s.bank||'Main';const cs=document.getElementById('editCategory');if(![...cs.options].some(o=>o.value===s.category))cs.add(new Option(s.category,s.category));cs.value=s.category;document.getElementById('editModal').classList.add('open');await QuickTrim.init(id)},
   async saveEdit(){const id=AppState.editingSoundId;if(!id)return;const idx=AppState.sounds.findIndex(s=>s.id===id);if(idx===-1)return;Object.assign(AppState.sounds[idx],{name:document.getElementById('editName').value.trim()||'Untitled',icon:document.getElementById('editIcon').value.trim()||'🔊',color:document.getElementById('editColor').value,volume:parseInt(document.getElementById('editVolume').value),bank:document.getElementById('editBank').value,category:document.getElementById('editCategory').value,loopDefault:document.getElementById('editLoopDefault').value==='1'});await Storage.saveMeta(AppState.sounds[idx]);document.getElementById('editModal').classList.remove('open');AppState.editingSoundId=null;this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Updated')},
-  async deleteSound(id){const s=AppState.sounds.find(x=>x.id===id);if(!s||!confirm(`Delete "${s.name}"?`))return;AudioEngine.stop(id);AudioEngine.evictBuffer(id);await Storage.deleteMeta(id);await Storage.deleteAudio(id);AppState.sounds=AppState.sounds.filter(x=>x.id!==id);this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Deleted')},
+  async deleteSound(id){const s=AppState.sounds.find(x=>x.id===id);if(!s||!confirm(`Delete "${s.name}"?`))return;AudioEngine.stop(id);AudioEngine.evictBuffer(id);WaveThumb.remove(id);await Storage.deleteMeta(id);await Storage.deleteAudio(id);AppState.sounds=AppState.sounds.filter(x=>x.id!==id);this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Deleted')},
   async downloadWAV(id){const blob=await Storage.loadAudio(id);if(!blob)return;const s=AppState.sounds.find(x=>x.id===id);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${s?.name||'sound'}.wav`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},
   showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2000)},
 };
@@ -816,6 +1035,35 @@ function setupEvents(){
   document.getElementById('chopModal').addEventListener('click',e=>{if(e.target===e.currentTarget){AudioEngine.stopPreview();document.getElementById('chopModal').classList.remove('open')}});
   document.getElementById('regionList').addEventListener('click',e=>{const pb=e.target.closest('.r-btn.play'),db=e.target.closest('.r-btn.del');if(pb)Chopper.previewRegion(parseInt(pb.dataset.idx));if(db)Chopper.removeRegion(parseInt(db.dataset.idx))});
 
+  // ★ Voice Changer
+  document.getElementById('voiceFxSettingsBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');VoiceFX.open()});
+  document.getElementById('vfxClose').addEventListener('click',()=>VoiceFX.close());
+  document.getElementById('voiceFxModal').addEventListener('click',e=>{if(e.target===e.currentTarget)VoiceFX.close()});
+  document.getElementById('vfxRecordBtn').addEventListener('click',()=>VoiceFX.record());
+  document.getElementById('vfxLibraryList').addEventListener('click',e=>{const item=e.target.closest('.lib-pick-item');if(item)VoiceFX.loadFromLibrary(item.dataset.id)});
+  document.getElementById('vfxPitch').addEventListener('input',()=>VoiceFX.onPitchInput());
+  document.getElementById('vfxPreview').addEventListener('click',()=>VoiceFX.preview());
+  document.getElementById('vfxSave').addEventListener('click',()=>VoiceFX.save());
+  document.getElementById('vfxNewSource').addEventListener('click',()=>VoiceFX.newSource());
+  document.getElementById('vfxEditor').addEventListener('click',e=>{const b=e.target.closest('.vfx-preset-btn');if(b)VoiceFX.applyPresetByName(b.dataset.group,b.dataset.name)});
+
+  // ★ Keyboard shortcuts: 1-9,0 play pad by number; Esc stops all / closes a modal
+  document.addEventListener('keydown',e=>{
+    const tag=(document.activeElement&&document.activeElement.tagName)||'';
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.metaKey||e.ctrlKey||e.altKey)return;
+    const openModal=document.querySelector('.modal-overlay.open');
+    if(e.key==='Escape'){if(openModal)openModal.classList.remove('open');else{AudioEngine.stopAll();UI.renderGrid()}return}
+    if(openModal)return;
+    let idx=null;
+    if(e.key>='1'&&e.key<='9')idx=parseInt(e.key,10)-1;else if(e.key==='0')idx=9;
+    if(idx===null)return;
+    const s=UI.getFilteredSounds()[idx];
+    if(!s)return;
+    e.preventDefault();
+    if(AudioEngine.isPlaying(s.id))AudioEngine.stop(s.id);else AudioEngine.play(s.id,(s.volume||80)/100,s.loopDefault||AppState.loopMode);
+    UI.renderGrid();
+  });
+
   // Edit
   document.getElementById('editSave').addEventListener('click',()=>{QuickTrim.cleanup();UI.saveEdit()});document.getElementById('editDelete').addEventListener('click',()=>{if(AppState.editingSoundId){QuickTrim.cleanup();UI.deleteSound(AppState.editingSoundId);document.getElementById('editModal').classList.remove('open')}});document.getElementById('editDownload').addEventListener('click',()=>{if(AppState.editingSoundId)UI.downloadWAV(AppState.editingSoundId)});document.getElementById('editClose').addEventListener('click',()=>{QuickTrim.cleanup();document.getElementById('editModal').classList.remove('open');AppState.editingSoundId=null});document.getElementById('editModal').addEventListener('click',e=>{if(e.target===e.currentTarget){QuickTrim.cleanup();document.getElementById('editModal').classList.remove('open');AppState.editingSoundId=null}});
 
@@ -832,7 +1080,7 @@ function setupEvents(){
   document.getElementById('manageBanksBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');Banks.renderList();document.getElementById('bankModal').classList.add('open')});document.getElementById('addBankBtn').addEventListener('click',()=>{Banks.add(document.getElementById('newBankName').value);document.getElementById('newBankName').value='';UI.renderBanks()});document.getElementById('newBankName').addEventListener('keydown',e=>{if(e.key==='Enter'){Banks.add(e.target.value);e.target.value='';UI.renderBanks()}});document.getElementById('bankList').addEventListener('click',e=>{const del=e.target.closest('.bank-list-delete'),nm=e.target.closest('.bank-list-name');if(del)Banks.remove(del.dataset.bank);else if(nm&&nm.dataset.bank!=='Main'){const n=prompt(`Rename:`,nm.dataset.bank);if(n)Banks.rename(nm.dataset.bank,n);UI.renderBanks()}});document.getElementById('bankModalClose').addEventListener('click',()=>document.getElementById('bankModal').classList.remove('open'));document.getElementById('bankModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('bankModal').classList.remove('open')});
   document.getElementById('exportBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');ExportImport.exportLib()});document.getElementById('exportDone').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('open'));document.getElementById('exportModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('exportModal').classList.remove('open')});
   document.getElementById('importBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');document.getElementById('importFileInput').click()});document.getElementById('importFileInput').addEventListener('change',e=>{if(e.target.files[0])ExportImport.importFile(e.target.files[0]);e.target.value=''});document.getElementById('importCancel').addEventListener('click',()=>{document.getElementById('importPreviewModal').classList.remove('open');window._iData=null});document.getElementById('importConfirm').addEventListener('click',()=>ExportImport.confirmImport());document.getElementById('importPreviewModal').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('importPreviewModal').classList.remove('open');window._iData=null}});
-  document.getElementById('clearAllBtn').addEventListener('click',async()=>{if(!confirm('Delete ALL sounds?')||!confirm('Cannot undo.'))return;AudioEngine.stopAll();AppState.decodedBuffers.clear();await Storage.clearAll();AppState.sounds=[];UI.renderBanks();UI.renderCategories();UI.renderGrid();document.getElementById('settingsModal').classList.remove('open');UI.showToast('Cleared')});
+  document.getElementById('clearAllBtn').addEventListener('click',async()=>{if(!confirm('Delete ALL sounds?')||!confirm('Cannot undo.'))return;AudioEngine.stopAll();AppState.decodedBuffers.clear();WaveThumb.clear();await Storage.clearAll();AppState.sounds=[];UI.renderBanks();UI.renderCategories();UI.renderGrid();document.getElementById('settingsModal').classList.remove('open');UI.showToast('Cleared')});
 
   document.addEventListener('click',()=>AudioEngine.getContext(),{once:true});document.addEventListener('touchstart',()=>AudioEngine.getContext(),{once:true});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const c=AudioEngine.getContext();if(c.state==='suspended')c.resume()}});
