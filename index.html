@@ -247,6 +247,15 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .song-step .ss-del{width:26px;height:26px;border-radius:7px;border:none;background:rgba(255,61,113,.15);color:var(--accent);font-size:13px;cursor:pointer;flex-shrink:0}
 .song-lib-list{max-height:230px;overflow-y:auto;border:1.5px solid var(--surface3);border-radius:14px;background:var(--surface2)}
 .song-empty{text-align:center;color:var(--text2);font-size:13px;padding:16px}
+.song-layers{display:flex;flex-direction:column;gap:8px}
+.song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
+.song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
+.song-layer .sl-name{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.song-layer .sl-count{font-size:11px;color:var(--text2);background:var(--surface3);border-radius:20px;padding:2px 8px}
+.song-layer .sl-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface3);color:var(--text);font-size:13px;cursor:pointer;flex-shrink:0}
+.song-layer .sl-btn.on{background:var(--accent3);color:#fff}
+.song-layer .sl-btn.off{opacity:.45}
+.song-layer .sl-btn.del{background:rgba(255,61,113,.15);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -291,6 +300,9 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       <button class="action-btn btn-record" id="songPlayBtn" style="flex:1"><span>▶</span> Play Song</button>
       <button class="icon-btn" id="songLoopBtn" title="Loop song">🔁</button>
     </div>
+    <div class="song-section-label">Layers <span style="font-weight:400;text-transform:none;letter-spacing:0">— all play together</span></div>
+    <div class="song-layers" id="songLayers"></div>
+    <button class="chop-btn" id="songAddLayerBtn" style="width:100%;justify-content:center;margin-top:8px">➕ Add Layer</button>
     <div class="song-section-label">Steps <span id="songStepsCount"></span></div>
     <div class="song-steps" id="songStepsList"></div>
     <div class="song-section-label">Tap a sound to add it</div>
@@ -520,7 +532,7 @@ const AudioEngine=(()=>{let ctx=null;
   }
   async function play(id,vol=.8,loop=false){if(AppState.playing.has(id))return false;const s=AppState.sounds.find(x=>x.id===id);if(s&&s.tts)return playTTS(id,s,vol,loop);if(AppState.playing.size>=CONFIG.MAX_CONCURRENT)return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(c.destination);src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});bumpPlayCount(s);return true}
   function stop(id){const e=AppState.playing.get(id);if(!e)return;if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}AppState.playing.delete(id)}
-  function stopAll(){for(const[,e]of AppState.playing){if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}}AppState.playing.clear()}
+  function stopAll(){for(const[,e]of AppState.playing){if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}}AppState.playing.clear();stopScheduled()}
   function isPlaying(id){return AppState.playing.has(id)}
   function evictBuffer(id){AppState.decodedBuffers.delete(id)}
   // Play a raw buffer (for preview)
@@ -528,7 +540,27 @@ const AudioEngine=(()=>{let ctx=null;
   function previewBuffer(buffer,startTime=0,duration=null){stopPreview();const c=getContext(),src=c.createBufferSource();src.buffer=buffer;src.connect(c.destination);src.start(0,startTime,duration||undefined);previewSrc=src;src.onended=()=>{previewSrc=null}}
   function stopPreview(){if(previewSrc){try{previewSrc.stop()}catch(e){}previewSrc=null}}
   function generateTone(freq,type,dur){const sr=44100,len=Math.floor(sr*dur),bps=16,br=sr*bps/8,ba=bps/8,ds=len*ba;const ab=new ArrayBuffer(44+ds),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,br,true);v.setUint16(32,ba,true);v.setUint16(34,bps,true);ws(36,'data');v.setUint32(40,ds,true);for(let i=0;i<len;i++){const t=i/sr,env=Math.max(0,1-t/dur),ph=2*Math.PI*freq*t;let s=0;switch(type){case'sine':s=Math.sin(ph);break;case'square':s=Math.sin(ph)>0?.8:-.8;break;case'sawtooth':s=2*((freq*t)%1)-1;break;case'triangle':s=4*Math.abs(((freq*t)%1)-.5)-1;break}v.setInt16(44+i*2,Math.max(-1,Math.min(1,s*env*.5))*0x7FFF,true)}return new Blob([ab],{type:'audio/wav'})}
-  return{getContext,decode,getBuffer,play,stop,stopAll,isPlaying,evictBuffer,previewBuffer,stopPreview,generateTone};
+  // Scheduled playback for the song timeline. Deliberately separate from play():
+  // play() refuses to start a sound that is already sounding, which is correct
+  // for pads but wrong for layers, where one sound may appear on several tracks
+  // at once. Starting sources against the Web Audio clock also keeps tracks
+  // locked together - setTimeout chaining drifts and layers slide apart.
+  let scheduled=[];
+  function playScheduled(id,vol,when){
+    const buf=AppState.decodedBuffers.get(id);
+    if(!buf)return null;
+    const c=getContext(),src=c.createBufferSource(),g=c.createGain();
+    src.buffer=buf;g.gain.value=vol;src.connect(g);g.connect(c.destination);
+    try{src.start(when)}catch(e){return null}
+    scheduled.push(src);
+    src.onended=()=>{const i=scheduled.indexOf(src);if(i>-1)scheduled.splice(i,1)};
+    return src;
+  }
+  function stopScheduled(){
+    for(const s of scheduled){try{s.stop()}catch(e){}}
+    scheduled=[];
+  }
+  return{getContext,decode,getBuffer,play,stop,stopAll,isPlaying,evictBuffer,previewBuffer,stopPreview,generateTone,playScheduled,stopScheduled};
 })();
 
 // ═══ AUDIO PROCESSING ═══
@@ -1389,36 +1421,76 @@ const Notes=(()=>{
 })();
 
 // ═══ SONG BUILDER MODE ═══
+// A song is a set of LAYERS that all start together and run in parallel.
+// Within a layer, steps still play one after another (sound length + gap), so a
+// single-layer song behaves exactly like the old sequential builder. Everything
+// is scheduled against the Web Audio clock so layers stay locked together.
 const SongBuilder=(()=>{
-  let songs=[],activeId=null,playToken=0;
-  const wait=ms=>new Promise(r=>setTimeout(r,Math.max(0,ms)));
+  const LOOKAHEAD=.25, TICK=60;
+  let songs=[],activeId=null,activeLayerId=null,timer=null,states=[],playToken=0,hlTimers=[];
   const active=()=>songs.find(s=>s.id===activeId)||null;
-  function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+  const activeLayer=()=>{const s=active();if(!s)return null;return s.layers.find(l=>l.id===activeLayerId)||s.layers[0]||null};
+  const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const uid=()=>crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
 
-  async function open(){
-    try{songs=await Storage.loadAllSongs()}catch(e){songs=[]}
-    if(!songs.length)await create('My First Song',true);
-    if(!activeId||!songs.some(s=>s.id===activeId))activeId=songs[0]?songs[0].id:null;
-    renderSelect();renderSteps();renderLibrary();updateControls();
-  }
-  async function create(name,silent){
-    const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
-    const song={id,name:name||`Song ${songs.length+1}`,steps:[],loop:false,createdAt:new Date().toISOString()};
-    try{await Storage.saveSong(song)}catch(e){}
-    songs.push(song);activeId=id;
-    if(!silent){renderSelect();renderSteps();updateControls();UI.showToast('New song created')}
+  // Older songs stored a flat steps[] array; fold that into a single layer.
+  function normalise(song){
+    if(!song.layers){
+      song.layers=[{id:uid(),name:'Layer 1',steps:song.steps||[],loop:!!song.loop,muted:false,volume:1}];
+      delete song.steps;
+    }
+    song.layers.forEach(l=>{if(l.volume==null)l.volume=1;if(!l.steps)l.steps=[]});
     return song;
   }
+
+  async function open(){
+    let raw=[];
+    try{raw=await Storage.loadAllSongs()}catch(e){raw=[]}
+    // Migrate legacy flat-steps songs once and write the converted shape back,
+    // otherwise storage keeps the old format and re-converts on every load.
+    const migrated=[];
+    songs=raw.map(sg=>{const had=!!sg.layers;const n=normalise(sg);if(!had)migrated.push(n);return n});
+    for(const sg of migrated){try{await Storage.saveSong(sg)}catch(e){}}
+    if(!songs.length)await create('My First Song',true);
+    if(!activeId||!songs.some(s=>s.id===activeId))activeId=songs[0]?songs[0].id:null;
+    const s=active();
+    if(s&&(!activeLayerId||!s.layers.some(l=>l.id===activeLayerId)))activeLayerId=s.layers[0]?s.layers[0].id:null;
+    renderAll();
+  }
+  function renderAll(){renderSelect();renderLayers();renderSteps();renderLibrary();updateControls()}
+
+  async function create(name,silent){
+    const song=normalise({id:uid(),name:name||`Song ${songs.length+1}`,layers:null,steps:[],loop:false,createdAt:new Date().toISOString()});
+    try{await Storage.saveSong(song)}catch(e){}
+    songs.push(song);activeId=song.id;activeLayerId=song.layers[0].id;
+    if(!silent){renderAll();UI.showToast('New song created')}
+    return song;
+  }
+  async function persist(){const s=active();if(s){try{await Storage.saveSong(s)}catch(e){}}}
+
   function renderSelect(){
     const sel=document.getElementById('songSelect');if(!sel)return;
-    sel.innerHTML=songs.map(s=>`<option value="${s.id}">${esc(s.name)} (${s.steps.length})</option>`).join('');
+    sel.innerHTML=songs.map(s=>{const n=s.layers.reduce((a,l)=>a+l.steps.length,0);
+      return`<option value="${s.id}">${esc(s.name)} (${n})</option>`}).join('');
     if(activeId)sel.value=activeId;
   }
+  function renderLayers(){
+    const box=document.getElementById('songLayers'),song=active();if(!box)return;
+    if(!song){box.innerHTML='';return}
+    box.innerHTML=song.layers.map(l=>
+      `<div class="song-layer ${l.id===activeLayerId?'sel':''}" data-lid="${l.id}">
+         <span class="sl-name">${esc(l.name)}</span>
+         <span class="sl-count">${l.steps.length}</span>
+         <button class="sl-btn ${l.muted?'off':''}" data-act="mute" data-lid="${l.id}" title="Mute">${l.muted?'🔇':'🔊'}</button>
+         <button class="sl-btn ${l.loop?'on':''}" data-act="loop" data-lid="${l.id}" title="Loop layer">🔁</button>
+         <button class="sl-btn del" data-act="del" data-lid="${l.id}" title="Delete layer">✕</button>
+       </div>`).join('');
+  }
   function renderSteps(){
-    const song=active(),list=document.getElementById('songStepsList');if(!list)return;
-    document.getElementById('songStepsCount').textContent=song?`(${song.steps.length})`:'';
-    if(!song||!song.steps.length){list.innerHTML='<div class="song-empty">No steps yet — tap a sound below to add it.</div>';return}
-    list.innerHTML=song.steps.map((step,i)=>{
+    const list=document.getElementById('songStepsList'),layer=activeLayer();if(!list)return;
+    document.getElementById('songStepsCount').textContent=layer?`— ${layer.name} (${layer.steps.length})`:'';
+    if(!layer||!layer.steps.length){list.innerHTML='<div class="song-empty">No steps in this layer — tap a sound below to add one.</div>';return}
+    list.innerHTML=layer.steps.map((step,i)=>{
       const s=AppState.sounds.find(x=>x.id===step.soundId);
       return`<div class="song-step" data-idx="${i}"><span class="ss-num">${i+1}</span><span class="ss-icon">${s?s.icon:'❓'}</span><span class="ss-name">${s?esc(s.name):'(missing sound)'}</span>`+
             `<button class="ss-move" data-dir="up" data-idx="${i}" title="Move up">▲</button>`+
@@ -1433,61 +1505,135 @@ const SongBuilder=(()=>{
     if(!sounds.length){list.innerHTML='<div class="lib-pick-empty">No sounds in your library yet</div>';return}
     list.innerHTML=sounds.map(s=>`<div class="lib-pick-item" data-id="${s.id}"><div class="lp-icon pad-${s.color}">${s.icon}</div><span class="lp-name">${esc(s.name)}</span><span class="lp-dur">${esc(s.bank||'Main')}</span></div>`).join('');
   }
-  async function persist(){const song=active();if(song){try{await Storage.saveSong(song)}catch(e){}}}
-  async function addStep(soundId){const song=active();if(!song)return;song.steps.push({soundId,gapMs:150});await persist();renderSteps();renderSelect()}
-  async function removeStep(i){const song=active();if(!song)return;song.steps.splice(i,1);await persist();renderSteps();renderSelect()}
-  async function moveStep(i,dir){
-    const song=active();if(!song)return;
-    const j=dir==='up'?i-1:i+1; if(j<0||j>=song.steps.length)return;
-    const t=song.steps[i];song.steps[i]=song.steps[j];song.steps[j]=t;
-    await persist();renderSteps();
-  }
-  async function setGap(i,ms){const song=active();if(!song||!song.steps[i])return;song.steps[i].gapMs=Math.max(0,parseInt(ms,10)||0);await persist()}
-  function select(id){activeId=id;renderSteps();updateControls()}
-  async function rename(){const song=active();if(!song)return;const n=prompt('Song name:',song.name);if(!n)return;song.name=n.trim()||song.name;await persist();renderSelect()}
-  async function remove(){
-    const song=active();if(!song)return;
-    if(!confirm(`Delete "${song.name}"?`))return;
-    stop();
-    try{await Storage.deleteSong(song.id)}catch(e){}
-    songs=songs.filter(s=>s.id!==song.id);
-    if(!songs.length)await create('My First Song',true);
-    activeId=songs[0].id;renderSelect();renderSteps();updateControls();UI.showToast('Song deleted');
-  }
-  function toggleLoop(){const song=active();if(!song)return;song.loop=!song.loop;persist();updateControls()}
   function updateControls(){
-    const song=active(),loopBtn=document.getElementById('songLoopBtn'),playBtn=document.getElementById('songPlayBtn');
-    if(loopBtn)loopBtn.classList.toggle('active',!!(song&&song.loop));
-    if(playBtn)playBtn.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop Song':'<span>▶</span> Play Song';
+    const song=active(),lp=document.getElementById('songLoopBtn'),pb=document.getElementById('songPlayBtn');
+    if(lp)lp.classList.toggle('active',!!(song&&song.loop));
+    if(pb)pb.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop Song':'<span>▶</span> Play Song';
   }
-  function highlight(i){
-    document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.toggle('playing-step',+el.dataset.idx===i));
+
+  // ── editing ──
+  async function addLayer(){
+    const song=active();if(!song)return;
+    const l={id:uid(),name:`Layer ${song.layers.length+1}`,steps:[],loop:false,muted:false,volume:1};
+    song.layers.push(l);activeLayerId=l.id;await persist();renderAll();UI.showToast(`${l.name} added`);
   }
-  async function play(){
-    const song=active();
-    if(!song||!song.steps.length){UI.showToast('Add some steps first');return}
-    if(AppState.songPlaying){stop();return}
-    const token=++playToken;
-    AppState.songPlaying=true;updateControls();
-    do{
-      for(let i=0;i<song.steps.length;i++){
-        if(token!==playToken)return;
-        const step=song.steps[i];
-        const buf=await AudioEngine.getBuffer(step.soundId);
-        if(!buf)continue;
-        const s=AppState.sounds.find(x=>x.id===step.soundId);
-        highlight(i);
-        await AudioEngine.play(step.soundId,(s&&s.volume?s.volume:80)/100,false);
-        UI.renderGrid();
-        await wait(buf.duration*1000);
-        if(token!==playToken)return;
-        await wait(step.gapMs==null?150:step.gapMs);
+  async function removeLayer(lid){
+    const song=active();if(!song)return;
+    if(song.layers.length<=1){UI.showToast('A song needs at least one layer');return}
+    const l=song.layers.find(x=>x.id===lid);
+    if(l&&l.steps.length&&!confirm(`Delete "${l.name}" and its ${l.steps.length} step(s)?`))return;
+    song.layers=song.layers.filter(x=>x.id!==lid);
+    if(activeLayerId===lid)activeLayerId=song.layers[0].id;
+    await persist();renderAll();
+  }
+  function selectLayer(lid){activeLayerId=lid;renderLayers();renderSteps()}
+  async function toggleLayer(lid,what){
+    const song=active();if(!song)return;
+    const l=song.layers.find(x=>x.id===lid);if(!l)return;
+    if(what==='mute')l.muted=!l.muted; else l.loop=!l.loop;
+    await persist();renderLayers();
+  }
+  async function addStep(soundId){
+    const song=active();if(!song)return;
+    let layer=activeLayer();
+    if(!layer){layer=song.layers[0];activeLayerId=layer.id}
+    layer.steps.push({soundId,gapMs:150});
+    await persist();renderSteps();renderLayers();renderSelect();
+  }
+  async function removeStep(i){const l=activeLayer();if(!l)return;l.steps.splice(i,1);await persist();renderSteps();renderLayers();renderSelect()}
+  async function moveStep(i,dir){
+    const l=activeLayer();if(!l)return;
+    const j=dir==='up'?i-1:i+1;if(j<0||j>=l.steps.length)return;
+    const t=l.steps[i];l.steps[i]=l.steps[j];l.steps[j]=t;await persist();renderSteps();
+  }
+  async function setGap(i,ms){const l=activeLayer();if(!l||!l.steps[i])return;l.steps[i].gapMs=Math.max(0,parseInt(ms,10)||0);await persist()}
+  function select(id){activeId=id;const s=active();activeLayerId=s&&s.layers[0]?s.layers[0].id:null;renderAll()}
+  async function rename(){const s=active();if(!s)return;const n=prompt('Song name:',s.name);if(!n)return;s.name=n.trim()||s.name;await persist();renderSelect()}
+  async function remove(){
+    const s=active();if(!s)return;
+    if(!confirm(`Delete "${s.name}"?`))return;
+    stop();
+    try{await Storage.deleteSong(s.id)}catch(e){}
+    songs=songs.filter(x=>x.id!==s.id);
+    if(!songs.length)await create('My First Song',true);
+    activeId=songs[0].id;activeLayerId=songs[0].layers[0].id;renderAll();UI.showToast('Song deleted');
+  }
+  function toggleLoop(){const s=active();if(!s)return;s.loop=!s.loop;persist();updateControls()}
+
+  // ── playback: look-ahead scheduler over all layers at once ──
+  function clearHighlights(){hlTimers.forEach(clearTimeout);hlTimers=[];
+    document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.remove('playing-step'))}
+  function highlightAt(lid,idx,when){
+    const c=AudioEngine.getContext(),delay=Math.max(0,(when-c.currentTime)*1000);
+    hlTimers.push(setTimeout(()=>{
+      if(lid!==activeLayerId)return;
+      document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.toggle('playing-step',+el.dataset.idx===idx));
+    },delay));
+  }
+  function initStates(song,base){
+    return song.layers.map(l=>({layer:l,idx:0,next:base,done:!l.steps.length}));
+  }
+  function tick(){
+    const song=active();if(!song)return;
+    const c=AudioEngine.getContext(),horizon=c.currentTime+LOOKAHEAD;
+    let active_=false,latest=0;
+    for(const st of states){
+      if(!st.done){
+        let guard=0;
+        while(st.next<horizon&&guard++<512){
+          if(st.idx>=st.layer.steps.length){
+            if(st.layer.loop&&st.layer.steps.length)st.idx=0;
+            else{st.done=true;break}
+          }
+          const step=st.layer.steps[st.idx];
+          const buf=AppState.decodedBuffers.get(step.soundId);
+          const dur=buf?buf.duration:.2;
+          if(buf&&!st.layer.muted){
+            const snd=AppState.sounds.find(x=>x.id===step.soundId);
+            const vol=((snd&&snd.volume!=null?snd.volume:80)/100)*(st.layer.volume==null?1:st.layer.volume);
+            AudioEngine.playScheduled(step.soundId,vol,st.next);
+            highlightAt(st.layer.id,st.idx,st.next);
+          }
+          st.next+=dur+(step.gapMs==null?150:step.gapMs)/1000;
+          st.idx++;
+        }
       }
-    }while(song.loop&&token===playToken);
-    if(token===playToken){AppState.songPlaying=false;highlight(-1);updateControls()}
+      if(!st.done)active_=true;
+      if(st.next>latest)latest=st.next;
+    }
+    if(!active_){
+      if(song.loop){states=initStates(song,latest)}          // restart everything together
+      else{
+        const wait=Math.max(0,(latest-c.currentTime)*1000)+80;
+        const tok=playToken;
+        clearInterval(timer);timer=null;
+        setTimeout(()=>{if(tok===playToken)finish()},wait);
+      }
+    }
   }
-  function stop(){playToken++;AudioEngine.stopAll();AppState.songPlaying=false;highlight(-1);updateControls();UI.renderGrid()}
-  return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,renderLibrary};
+  function finish(){AppState.songPlaying=false;clearHighlights();updateControls()}
+
+  function play(){
+    const song=active();
+    if(!song){UI.showToast('No song selected');return}
+    const total=song.layers.reduce((a,l)=>a+l.steps.length,0);
+    if(!total){UI.showToast('Add some steps first');return}
+    if(AppState.songPlaying){stop();return}
+    playToken++;
+    const c=AudioEngine.getContext();
+    states=initStates(song,c.currentTime+.08);
+    AppState.songPlaying=true;updateControls();
+    tick();
+    clearInterval(timer);timer=setInterval(tick,TICK);
+  }
+  function stop(){
+    playToken++;
+    clearInterval(timer);timer=null;states=[];
+    AudioEngine.stopScheduled();AudioEngine.stopAll();
+    finish();UI.renderGrid();
+  }
+  return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
+         addLayer,removeLayer,selectLayer,toggleLayer,renderLibrary};
 })();
 
 // ═══ MEME PACK ═══
@@ -1951,6 +2097,13 @@ function setupEvents(){
   });
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
+  document.getElementById('songAddLayerBtn').addEventListener('click',()=>SongBuilder.addLayer());
+  document.getElementById('songLayers').addEventListener('click',e=>{
+    const btn=e.target.closest('.sl-btn'),row=e.target.closest('.song-layer');
+    if(btn){const act=btn.dataset.act,lid=btn.dataset.lid;
+      if(act==='del')SongBuilder.removeLayer(lid);else SongBuilder.toggleLayer(lid,act);return}
+    if(row)SongBuilder.selectLayer(row.dataset.lid);
+  });
 
   document.addEventListener('click',()=>AudioEngine.getContext(),{once:true});document.addEventListener('touchstart',()=>AudioEngine.getContext(),{once:true});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const c=AudioEngine.getContext();if(c.state==='suspended')c.resume()}});
