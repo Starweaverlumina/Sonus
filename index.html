@@ -442,6 +442,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
   <div class="modal-overlay" id="importPreviewModal"><div class="modal"><h2>Import Preview</h2><div class="import-preview" id="importPreview"></div><div class="import-checkbox" id="importCheckboxArea"><label><input type="checkbox" id="importReplace"> Replace existing</label></div><div class="progress-track" id="importProgressTrack" style="display:none"><div class="progress-fill" id="importFill"></div></div><div class="progress-text" id="importText" style="display:none"></div><div class="modal-actions" id="importActions"><button class="cancel-btn" id="importCancel">Cancel</button><button class="save-btn" id="importConfirm">Import</button></div></div></div>
 </div>
 <div class="toast" id="toast"></div>
+<div id="dbBlockedBanner" style="display:none;position:fixed;inset:0;background:var(--bg);color:var(--text);flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;z-index:9999;font-family:'DM Sans',sans-serif">
+  <div style="font-size:40px;margin-bottom:16px">⏳</div>
+  <div style="font-size:16px;font-weight:700;margin-bottom:8px">Waiting for another tab</div>
+  <div style="font-size:13px;color:var(--text2);max-width:320px;line-height:1.5">This app is already open in another tab, window, or as an installed app elsewhere on this device. Close it and this page will continue automatically — no need to reload.</div>
+</div>
 <input type="file" id="fileInput" accept="audio/*" multiple hidden>
 <input type="file" id="importFileInput" accept=".sounddeck,.json" hidden>
 <input type="file" id="chopFileInput" accept="audio/*" hidden>
@@ -456,7 +461,7 @@ const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Mai
 
 // ═══ STORAGE ═══
 const Storage=(()=>{let db=null;
-  function open(){return new Promise((res,rej)=>{const req=indexedDB.open(CONFIG.DB_NAME,CONFIG.DB_VERSION);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(CONFIG.STORE_META))d.createObjectStore(CONFIG.STORE_META,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_AUDIO))d.createObjectStore(CONFIG.STORE_AUDIO,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_BANKS))d.createObjectStore(CONFIG.STORE_BANKS,{keyPath:'name'});if(!d.objectStoreNames.contains(CONFIG.STORE_NOTES))d.createObjectStore(CONFIG.STORE_NOTES,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_SONGS))d.createObjectStore(CONFIG.STORE_SONGS,{keyPath:'id'})};req.onsuccess=e=>{db=e.target.result;db.onversionchange=()=>{db.close();UI.showToast('DB updated — reload')};res(db)};req.onerror=e=>rej(e.target.error)})}
+  function open(onBlocked){return new Promise((res,rej)=>{const req=indexedDB.open(CONFIG.DB_NAME,CONFIG.DB_VERSION);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(CONFIG.STORE_META))d.createObjectStore(CONFIG.STORE_META,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_AUDIO))d.createObjectStore(CONFIG.STORE_AUDIO,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_BANKS))d.createObjectStore(CONFIG.STORE_BANKS,{keyPath:'name'});if(!d.objectStoreNames.contains(CONFIG.STORE_NOTES))d.createObjectStore(CONFIG.STORE_NOTES,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_SONGS))d.createObjectStore(CONFIG.STORE_SONGS,{keyPath:'id'})};req.onblocked=()=>{if(onBlocked)onBlocked()};req.onsuccess=e=>{db=e.target.result;db.onversionchange=()=>{db.close();UI.showToast('DB updated — reload')};res(db)};req.onerror=e=>rej(e.target.error)})}
   const tx=(s,m)=>db.transaction(s,m).objectStore(s),p=r=>new Promise((a,b)=>{r.onsuccess=()=>a(r.result);r.onerror=()=>b(r.error)});
   return{open,loadAllMeta:()=>p(tx(CONFIG.STORE_META,'readonly').getAll()),saveMeta:m=>p(tx(CONFIG.STORE_META,'readwrite').put(m)),deleteMeta:id=>p(tx(CONFIG.STORE_META,'readwrite').delete(id)),saveAudio:(id,blob)=>p(tx(CONFIG.STORE_AUDIO,'readwrite').put({id,blob})),loadAudio:async id=>{const r=await p(tx(CONFIG.STORE_AUDIO,'readonly').get(id));return r?r.blob:null},deleteAudio:id=>p(tx(CONFIG.STORE_AUDIO,'readwrite').delete(id)),clearAll:async()=>{await p(tx(CONFIG.STORE_META,'readwrite').clear());await p(tx(CONFIG.STORE_AUDIO,'readwrite').clear())},loadBanks:()=>p(tx(CONFIG.STORE_BANKS,'readonly').getAll()),saveBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').put({name})),deleteBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').delete(name)),
     loadAllNotes:()=>p(tx(CONFIG.STORE_NOTES,'readonly').getAll()),saveNote:n=>p(tx(CONFIG.STORE_NOTES,'readwrite').put(n)),deleteNote:id=>p(tx(CONFIG.STORE_NOTES,'readwrite').delete(id)),
@@ -1653,8 +1658,10 @@ function setupEvents(){
 }
 
 // ═══ BOOT ═══
+function showDbBlockedBanner(){const b=document.getElementById('dbBlockedBanner');if(b)b.style.display='flex'}
+function hideDbBlockedBanner(){const b=document.getElementById('dbBlockedBanner');if(b)b.style.display='none'}
 async function boot(){
-  try{await Storage.open();AppState.sounds=await Storage.loadAllMeta();AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));await Banks.load();
+  try{await Storage.open(showDbBlockedBanner);hideDbBlockedBanner();AppState.sounds=await Storage.loadAllMeta();AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));await Banks.load();
     Promise.all(AppState.sounds.map(async s=>{const b=await Storage.loadAudio(s.id);if(b)await AudioEngine.decode(s.id,b)}));
     UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.setupColorSelect();setupEvents();VoiceEngine.init();Chopper.setupCanvasEvents();
     if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>TTS.populateVoices();TTS.populateVoices()}
