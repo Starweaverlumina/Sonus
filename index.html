@@ -180,6 +180,44 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .trim-actions button{flex:1;height:40px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 .trim-btn-preview{background:var(--surface3);color:var(--text)}
 .trim-btn-save{background:var(--accent2);color:#000}
+
+/* ═══ ★ MODE TABS ═══ */
+.mode-tabs{display:flex;gap:6px;padding:0 20px 10px;flex-shrink:0}
+.mode-tab{flex:1;padding:9px 0;border-radius:12px;border:1.5px solid var(--surface3);background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+.mode-tab:active{transform:scale(.97)}.mode-tab.active{background:var(--accent3);border-color:var(--accent3);color:#fff}
+
+/* ═══ ★ NOTES MODE ═══ */
+.notes-toolbar{display:flex;gap:10px;padding:0 20px 12px;flex-shrink:0}
+.notes-toolbar button{flex:1}
+.notes-list{flex:1;overflow-y:auto;padding:0 20px 100px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.note-item{display:flex;gap:12px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:14px;padding:14px;cursor:pointer}
+.note-icon{font-size:22px;flex-shrink:0}
+.note-body{flex:1;min-width:0}
+.note-title{font-weight:700;font-size:14px;margin-bottom:2px}
+.note-date{font-size:11px;color:var(--text2);margin-bottom:4px}
+.note-preview{font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.note-voice-row{display:flex;align-items:center;gap:8px}
+.note-play-btn{width:28px;height:28px;border-radius:50%;border:none;background:var(--accent2);color:#000;font-size:12px;cursor:pointer;flex-shrink:0}
+.note-dur{font-size:12px;color:var(--text2)}
+.note-del-btn{width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,61,113,.15);color:var(--accent);font-size:14px;cursor:pointer;flex-shrink:0;align-self:flex-start}
+#noteText{width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;color:var(--text);padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical}
+#noteText:focus{outline:none;border-color:var(--accent3)}
+
+/* ═══ ★ SONG BUILDER MODE ═══ */
+.songs-view{flex:1;overflow-y:auto;padding:0 20px 100px;-webkit-overflow-scrolling:touch}
+.song-header-row{display:flex;gap:8px;padding:10px 0;align-items:center}
+.song-header-row select{flex:1;height:42px;border-radius:12px;border:1.5px solid var(--surface3);background:var(--surface2);color:var(--text);padding:0 12px;font-family:'DM Sans',sans-serif;font-size:14px}
+.song-controls-row{display:flex;gap:8px;padding:0 0 12px}
+.song-section-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:700;margin:12px 0 8px}
+.song-steps{display:flex;flex-direction:column;gap:8px;min-height:20px}
+.song-step{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:8px 10px;cursor:grab}
+.song-step .ss-num{font-size:11px;color:var(--text2);width:16px;flex-shrink:0;text-align:center}
+.song-step .ss-icon{font-size:18px;flex-shrink:0}
+.song-step .ss-name{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.song-step .ss-gap{width:56px;height:32px;border-radius:8px;border:1.5px solid var(--surface3);background:var(--surface3);color:var(--text);font-size:12px;text-align:center}
+.song-step .ss-del{width:26px;height:26px;border-radius:8px;border:none;background:rgba(255,61,113,.15);color:var(--accent);font-size:13px;cursor:pointer;flex-shrink:0}
+.song-lib-list{max-height:220px;overflow-y:auto;border:1.5px solid var(--surface3);border-radius:14px;background:var(--surface2)}
+.song-empty{text-align:center;color:var(--text2);font-size:13px;padding:16px}
 </style>
 </head>
 <body>
@@ -192,12 +230,47 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <button class="icon-btn" id="favToggle" title="Favorites">⭐</button>
     <button class="icon-btn" id="settingsToggle" title="Settings">⚙️</button>
   </div></header>
-  <div class="bank-bar" id="bankBar"></div>
-  <div class="voice-bar" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
-  <div class="search-bar" id="searchBar"><input type="text" id="searchInput" placeholder="Search sounds..."></div>
-  <div class="categories" id="categories"></div>
-  <div class="grid-wrapper" id="gridWrapper"><div class="sound-grid" id="soundGrid"></div></div>
-  <div class="bottom-bar">
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="pads">🎛️ Pads</button>
+    <button class="mode-tab" data-mode="notes">📝 Notes</button>
+    <button class="mode-tab" data-mode="songs">🎵 Songs</button>
+  </div>
+  <div id="padsView" style="display:contents">
+    <div class="bank-bar" id="bankBar"></div>
+    <div class="voice-bar" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
+    <div class="search-bar" id="searchBar"><input type="text" id="searchInput" placeholder="Search sounds..."></div>
+    <div class="categories" id="categories"></div>
+    <div class="grid-wrapper" id="gridWrapper"><div class="sound-grid" id="soundGrid"></div></div>
+  </div>
+
+  <!-- ★ NOTES MODE -->
+  <div id="notesView" style="display:none;flex-direction:column;flex:1;min-height:0">
+    <div class="notes-toolbar">
+      <button class="action-btn btn-upload" id="noteNewTextBtn"><span>📝</span> Text Note</button>
+      <button class="action-btn btn-record" id="noteNewVoiceBtn"><span>🎙️</span> Voice Note</button>
+    </div>
+    <div class="notes-list" id="notesList"></div>
+  </div>
+
+  <!-- ★ SONG BUILDER MODE -->
+  <div id="songsView" class="songs-view" style="display:none">
+    <div class="song-header-row">
+      <select id="songSelect"></select>
+      <button class="icon-btn" id="songNewBtn" title="New Song">+</button>
+      <button class="icon-btn" id="songRenameBtn" title="Rename">✏️</button>
+      <button class="icon-btn" id="songDeleteBtn" title="Delete Song">🗑️</button>
+    </div>
+    <div class="song-controls-row">
+      <button class="action-btn btn-record" id="songPlayBtn" style="flex:1"><span>▶</span> Play Song</button>
+      <button class="icon-btn" id="songLoopBtn" title="Loop Song">🔁</button>
+    </div>
+    <div class="song-section-label">Steps <span id="songStepsCount"></span></div>
+    <div class="song-steps" id="songStepsList"></div>
+    <div class="song-section-label">Tap a sound to add it</div>
+    <div class="song-lib-list" id="songLibList"></div>
+  </div>
+
+  <div class="bottom-bar" id="bottomBar">
     <button class="action-btn btn-record" id="recordBtn"><span>⏺</span> Record</button>
     <button class="action-btn btn-upload" id="uploadBtn"><span>📁</span> Upload</button>
     <button class="action-btn btn-chop" id="chopBtn" title="Audio Chopper">✂️</button>
@@ -299,6 +372,20 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="modal-actions" style="margin-top:8px"><button class="cancel-btn" id="ttsClose">Close</button></div>
   </div></div>
 
+  <!-- ★ NOTE EDITOR MODAL -->
+  <div class="modal-overlay" id="noteModal"><div class="modal">
+    <h2 id="noteModalTitle">New Note</h2>
+    <div class="modal-field"><label>Title</label><input type="text" id="noteTitle" placeholder="Note title" maxlength="80"></div>
+    <div class="modal-field" id="noteTextField"><label>Note</label><textarea id="noteText" rows="6" maxlength="4000"></textarea></div>
+    <div class="modal-field" id="noteVoiceField" style="display:none">
+      <label>Voice recording</label>
+      <div class="chop-controls"><button class="chop-btn" id="notePlayPreview">▶ Play</button><span id="noteVoiceDur" style="align-self:center;color:var(--text2);font-size:13px"></span></div>
+    </div>
+    <div class="modal-sub" id="noteMeta"></div>
+    <div class="modal-actions"><button class="danger-btn" id="noteDeleteBtn" style="display:none">Delete</button><button class="save-btn" id="noteSaveBtn">Save</button></div>
+    <div class="modal-actions" style="margin-top:8px"><button class="cancel-btn" id="noteCloseBtn">Cancel</button></div>
+  </div></div>
+
   <!-- Edit Modal -->
   <div class="modal-overlay" id="editModal"><div class="modal">
     <h2>Edit Sound</h2>
@@ -344,7 +431,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="settings-row" id="manageBanksBtn"><span class="settings-row-icon">📂</span><div class="settings-row-info"><div class="settings-row-title">Manage Banks</div><div class="settings-row-desc">Create, rename, delete</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="exportBtn"><span class="settings-row-icon">📤</span><div class="settings-row-info"><div class="settings-row-title">Export</div><div class="settings-row-desc">Download .sounddeck backup</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="importBtn"><span class="settings-row-icon">📥</span><div class="settings-row-info"><div class="settings-row-title">Import</div><div class="settings-row-desc">Restore from backup</div></div><span class="settings-row-arrow">›</span></div>
-    <div class="settings-row" id="clearAllBtn"><span class="settings-row-icon">🗑️</span><div class="settings-row-info"><div class="settings-row-title" style="color:var(--accent)">Clear All</div><div class="settings-row-desc">Delete everything</div></div><span class="settings-row-arrow">›</span></div>
+    <div class="settings-row" id="clearAllBtn"><span class="settings-row-icon">🗑️</span><div class="settings-row-info"><div class="settings-row-title" style="color:var(--accent)">Clear All</div><div class="settings-row-desc">Delete all sounds (notes and songs are kept)</div></div><span class="settings-row-arrow">›</span></div>
   </div><div id="storageInfo" style="margin-top:16px;font-size:12px;color:var(--text2);text-align:center"></div><div class="modal-actions" style="margin-top:16px"><button class="save-btn" id="settingsClose" style="background:var(--surface3)">Close</button></div></div></div>
 
   <!-- Bank Manager -->
@@ -361,17 +448,20 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 
 <script>
 'use strict';
-const CONFIG=Object.freeze({DB_NAME:'SoundDeckDB',DB_VERSION:2,STORE_META:'metadata',STORE_AUDIO:'audioblobs',STORE_BANKS:'banks',MAX_FILE_SIZE:25*1024*1024,MAX_CONCURRENT:8,VOICE_TIMEOUT_MS:5*60*1000,EXPORT_VERSION:2,
+const CONFIG=Object.freeze({DB_NAME:'SoundDeckDB',DB_VERSION:3,STORE_META:'metadata',STORE_AUDIO:'audioblobs',STORE_BANKS:'banks',STORE_NOTES:'notes',STORE_SONGS:'songs',MAX_FILE_SIZE:25*1024*1024,MAX_CONCURRENT:8,VOICE_TIMEOUT_MS:5*60*1000,EXPORT_VERSION:2,
   PAD_COLORS:[{name:'red',swatch:'#ff3d71'},{name:'green',swatch:'#00e5a0'},{name:'purple',swatch:'#7b61ff'},{name:'orange',swatch:'#ffaa00'},{name:'blue',swatch:'#3d9eff'},{name:'pink',swatch:'#ff61a6'},{name:'teal',swatch:'#00d4c8'},{name:'yellow',swatch:'#ffe144'}],
   DEFAULT_ICONS:['🔊','📯','🎵','🥁','👏','💥','😂','🔔','🎤','🎸','🎹','🐱','🐶','💀','🚨','🎉'],
   WORD_NUMBERS:{'one':1,'won':1,'two':2,'too':2,'to':2,'three':3,'free':3,'tree':3,'four':4,'for':4,'five':5,'six':6,'seven':7,'eight':8,'ate':8,'nine':9,'ten':10,'eleven':11,'twelve':12}});
-const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false};
+const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false,mode:'pads',songPlaying:false};
 
 // ═══ STORAGE ═══
 const Storage=(()=>{let db=null;
-  function open(){return new Promise((res,rej)=>{const req=indexedDB.open(CONFIG.DB_NAME,CONFIG.DB_VERSION);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(CONFIG.STORE_META))d.createObjectStore(CONFIG.STORE_META,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_AUDIO))d.createObjectStore(CONFIG.STORE_AUDIO,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_BANKS))d.createObjectStore(CONFIG.STORE_BANKS,{keyPath:'name'})};req.onsuccess=e=>{db=e.target.result;db.onversionchange=()=>{db.close();UI.showToast('DB updated — reload')};res(db)};req.onerror=e=>rej(e.target.error)})}
+  function open(){return new Promise((res,rej)=>{const req=indexedDB.open(CONFIG.DB_NAME,CONFIG.DB_VERSION);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(CONFIG.STORE_META))d.createObjectStore(CONFIG.STORE_META,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_AUDIO))d.createObjectStore(CONFIG.STORE_AUDIO,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_BANKS))d.createObjectStore(CONFIG.STORE_BANKS,{keyPath:'name'});if(!d.objectStoreNames.contains(CONFIG.STORE_NOTES))d.createObjectStore(CONFIG.STORE_NOTES,{keyPath:'id'});if(!d.objectStoreNames.contains(CONFIG.STORE_SONGS))d.createObjectStore(CONFIG.STORE_SONGS,{keyPath:'id'})};req.onsuccess=e=>{db=e.target.result;db.onversionchange=()=>{db.close();UI.showToast('DB updated — reload')};res(db)};req.onerror=e=>rej(e.target.error)})}
   const tx=(s,m)=>db.transaction(s,m).objectStore(s),p=r=>new Promise((a,b)=>{r.onsuccess=()=>a(r.result);r.onerror=()=>b(r.error)});
-  return{open,loadAllMeta:()=>p(tx(CONFIG.STORE_META,'readonly').getAll()),saveMeta:m=>p(tx(CONFIG.STORE_META,'readwrite').put(m)),deleteMeta:id=>p(tx(CONFIG.STORE_META,'readwrite').delete(id)),saveAudio:(id,blob)=>p(tx(CONFIG.STORE_AUDIO,'readwrite').put({id,blob})),loadAudio:async id=>{const r=await p(tx(CONFIG.STORE_AUDIO,'readonly').get(id));return r?r.blob:null},deleteAudio:id=>p(tx(CONFIG.STORE_AUDIO,'readwrite').delete(id)),clearAll:async()=>{await p(tx(CONFIG.STORE_META,'readwrite').clear());await p(tx(CONFIG.STORE_AUDIO,'readwrite').clear())},loadBanks:()=>p(tx(CONFIG.STORE_BANKS,'readonly').getAll()),saveBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').put({name})),deleteBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').delete(name)),getStorageEstimate:async()=>{if(navigator.storage?.estimate){const e=await navigator.storage.estimate();return{usage:e.usage||0,quota:e.quota||0}}return{usage:0,quota:0}}};
+  return{open,loadAllMeta:()=>p(tx(CONFIG.STORE_META,'readonly').getAll()),saveMeta:m=>p(tx(CONFIG.STORE_META,'readwrite').put(m)),deleteMeta:id=>p(tx(CONFIG.STORE_META,'readwrite').delete(id)),saveAudio:(id,blob)=>p(tx(CONFIG.STORE_AUDIO,'readwrite').put({id,blob})),loadAudio:async id=>{const r=await p(tx(CONFIG.STORE_AUDIO,'readonly').get(id));return r?r.blob:null},deleteAudio:id=>p(tx(CONFIG.STORE_AUDIO,'readwrite').delete(id)),clearAll:async()=>{await p(tx(CONFIG.STORE_META,'readwrite').clear());await p(tx(CONFIG.STORE_AUDIO,'readwrite').clear())},loadBanks:()=>p(tx(CONFIG.STORE_BANKS,'readonly').getAll()),saveBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').put({name})),deleteBank:name=>p(tx(CONFIG.STORE_BANKS,'readwrite').delete(name)),
+    loadAllNotes:()=>p(tx(CONFIG.STORE_NOTES,'readonly').getAll()),saveNote:n=>p(tx(CONFIG.STORE_NOTES,'readwrite').put(n)),deleteNote:id=>p(tx(CONFIG.STORE_NOTES,'readwrite').delete(id)),
+    loadAllSongs:()=>p(tx(CONFIG.STORE_SONGS,'readonly').getAll()),saveSong:s=>p(tx(CONFIG.STORE_SONGS,'readwrite').put(s)),deleteSong:id=>p(tx(CONFIG.STORE_SONGS,'readwrite').delete(id)),
+    getStorageEstimate:async()=>{if(navigator.storage?.estimate){const e=await navigator.storage.estimate();return{usage:e.usage||0,quota:e.quota||0}}return{usage:0,quota:0}}};
 })();
 
 // ═══ ★ PAD WAVEFORM THUMBNAILS ═══
@@ -1115,6 +1205,281 @@ const TTS=(()=>{
   return{open,preview,save,populateVoices};
 })();
 
+// ═══ ★ NOTES MODE ═══
+const Notes=(()=>{
+  let editingId=null,mr=null,chunks=[],pendingAudioBlob=null,pendingAudioBuffer=null;
+
+  function fmtDate(iso){const d=new Date(iso);return d.toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}
+  async function loadAll(){return(await Storage.loadAllNotes()).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}
+
+  async function render(){
+    const notes=await loadAll();
+    const list=document.getElementById('notesList');
+    if(!notes.length){list.innerHTML='<div class="empty-state"><div class="big-icon">🗒️</div><p>No notes yet.<br>Add a text or voice note above.</p></div>';return}
+    list.innerHTML=notes.map(n=>`
+      <div class="note-item" data-id="${n.id}">
+        <div class="note-icon">${n.type==='voice'?'🎙️':'📝'}</div>
+        <div class="note-body" data-id="${n.id}">
+          <div class="note-title">${n.title||'Untitled'}</div>
+          <div class="note-date">${fmtDate(n.createdAt)}</div>
+          ${n.type==='text'?`<div class="note-preview">${(n.text||'').slice(0,140)}</div>`:`<div class="note-voice-row"><button class="note-play-btn" data-id="${n.id}">▶</button><span class="note-dur">${n.duration?n.duration.toFixed(1)+'s':''}</span></div>`}
+        </div>
+        <button class="note-del-btn" data-id="${n.id}">✕</button>
+      </div>`).join('');
+  }
+
+  function resetModal(){
+    document.getElementById('noteTitle').value='';
+    document.getElementById('noteText').value='';
+    document.getElementById('noteVoiceDur').textContent='';
+    document.getElementById('noteDeleteBtn').style.display='none';
+    document.getElementById('noteMeta').textContent='';
+  }
+
+  function openNew(type){
+    editingId=null;pendingAudioBlob=null;pendingAudioBuffer=null;
+    resetModal();
+    document.getElementById('noteModalTitle').textContent=type==='voice'?'New Voice Note':'New Text Note';
+    document.getElementById('noteTextField').style.display=type==='text'?'':'none';
+    document.getElementById('noteVoiceField').style.display=type==='voice'?'':'none';
+    document.getElementById('noteModal').dataset.type=type;
+    document.getElementById('noteModal').classList.add('open');
+  }
+
+  async function openEdit(id){
+    const notes=await loadAll();const n=notes.find(x=>x.id===id);if(!n)return;
+    editingId=id;pendingAudioBlob=null;pendingAudioBuffer=null;
+    resetModal();
+    document.getElementById('noteModalTitle').textContent=n.type==='voice'?'Voice Note':'Text Note';
+    document.getElementById('noteTitle').value=n.title||'';
+    document.getElementById('noteText').value=n.text||'';
+    document.getElementById('noteTextField').style.display=n.type==='text'?'':'none';
+    document.getElementById('noteVoiceField').style.display=n.type==='voice'?'':'none';
+    document.getElementById('noteVoiceDur').textContent=n.duration?n.duration.toFixed(1)+'s':'';
+    document.getElementById('noteDeleteBtn').style.display='';
+    document.getElementById('noteMeta').textContent=`Created ${fmtDate(n.createdAt)}`;
+    document.getElementById('noteModal').dataset.type=n.type;
+    document.getElementById('noteModal').classList.add('open');
+  }
+
+  function close(){AudioEngine.stopPreview();document.getElementById('noteModal').classList.remove('open')}
+
+  async function save(){
+    const type=document.getElementById('noteModal').dataset.type;
+    const title=document.getElementById('noteTitle').value.trim()||(type==='voice'?'Voice Note':'Untitled Note');
+    if(editingId){
+      const notes=await loadAll();const n=notes.find(x=>x.id===editingId);if(!n)return;
+      n.title=title;if(type==='text')n.text=document.getElementById('noteText').value;
+      n.updatedAt=new Date().toISOString();
+      await Storage.saveNote(n);
+    }else{
+      const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+      const note={id,type,title,createdAt:new Date().toISOString()};
+      if(type==='text')note.text=document.getElementById('noteText').value;
+      else if(type==='voice'&&pendingAudioBlob){
+        await Storage.saveAudio(id,pendingAudioBlob);
+        await AudioEngine.decode(id,pendingAudioBlob);
+        note.audioId=id;
+        note.duration=pendingAudioBuffer?pendingAudioBuffer.duration:0;
+      }
+      await Storage.saveNote(note);
+    }
+    close();await render();UI.showToast('Note saved');
+  }
+
+  async function del(id){
+    if(!confirm('Delete this note?'))return;
+    const notes=await loadAll();const n=notes.find(x=>x.id===id);
+    if(n&&n.audioId){await Storage.deleteAudio(n.audioId);AppState.decodedBuffers.delete(n.audioId);WaveThumb.remove(n.audioId)}
+    await Storage.deleteNote(id);await render();UI.showToast('Deleted');
+  }
+
+  async function deleteCurrent(){
+    if(!editingId)return;
+    await del(editingId);
+    close();
+  }
+
+  async function play(id){
+    const notes=await loadAll();const n=notes.find(x=>x.id===id);if(!n||!n.audioId)return;
+    const buf=await AudioEngine.getBuffer(n.audioId);if(!buf)return;
+    AudioEngine.stopPreview();AudioEngine.previewBuffer(buf);
+  }
+
+  function previewPending(){
+    if(pendingAudioBuffer){AudioEngine.stopPreview();AudioEngine.previewBuffer(pendingAudioBuffer)}
+    else if(editingId)play(editingId);
+  }
+
+  async function toggleRecord(){
+    const btn=document.getElementById('noteNewVoiceBtn');
+    if(mr&&mr.state==='recording'){mr.stop();return}
+    VoiceEngine.pause();
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks=[];mr=new MediaRecorder(stream);
+      mr.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+      mr.onstop=async()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        btn.innerHTML='<span>🎙️</span> Voice Note';btn.classList.remove('recording');
+        VoiceEngine.resume();
+        try{
+          const raw=new Blob(chunks,{type:'audio/webm'});
+          const processedBlob=await AudioProcessing.processFile(new File([raw],'note.webm',{type:'audio/webm'}),{trim:true,normalize:true,fade:true});
+          const processedBuffer=await AudioProcessing.decodeFile(new File([processedBlob],'note.wav',{type:'audio/wav'}));
+          openNew('voice'); // resets pendingAudioBlob/Buffer — must run before assigning them below
+          pendingAudioBlob=processedBlob;pendingAudioBuffer=processedBuffer;
+          document.getElementById('noteVoiceDur').textContent=processedBuffer.duration.toFixed(1)+'s';
+        }catch(e){UI.showToast('Could not process recording')}
+      };
+      mr.start();btn.innerHTML='<span>⏹</span> Stop';btn.classList.add('recording');
+    }catch(e){
+      if(e.name==='NotAllowedError')UI.showToast('Mic blocked — allow microphone access');
+      else if(e.name==='NotFoundError')UI.showToast('No microphone found');
+      else UI.showToast('Mic error: '+e.message);
+      VoiceEngine.resume();
+    }
+  }
+
+  return{render,openNew,openEdit,close,save,del,deleteCurrent,play,previewPending,toggleRecord};
+})();
+
+// ═══ ★ SONG BUILDER MODE ═══
+const SongBuilder=(()=>{
+  let songs=[],activeSongId=null,playToken=0,sortableInstance=null;
+
+  function wait(ms){return new Promise(r=>setTimeout(r,Math.max(0,ms)))}
+  function activeSong(){return songs.find(s=>s.id===activeSongId)||null}
+
+  async function open(){
+    songs=await Storage.loadAllSongs();
+    if(!songs.length)await createSong('My First Song',true);
+    if(!activeSongId||!songs.some(s=>s.id===activeSongId))activeSongId=songs[0]?.id||null;
+    renderSelect();renderSteps();renderLibrary();updateControls();
+  }
+
+  async function createSong(name,silent){
+    const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+    const song={id,name:name||`Song ${songs.length+1}`,steps:[],loop:false,createdAt:new Date().toISOString()};
+    await Storage.saveSong(song);songs.push(song);activeSongId=id;
+    if(!silent){renderSelect();renderSteps();updateControls();UI.showToast('New song created')}
+    return song;
+  }
+
+  function renderSelect(){
+    const sel=document.getElementById('songSelect');
+    sel.innerHTML=songs.map(s=>`<option value="${s.id}">${s.name} (${s.steps.length})</option>`).join('');
+    if(activeSongId)sel.value=activeSongId;
+  }
+
+  function renderSteps(){
+    const song=activeSong();
+    const list=document.getElementById('songStepsList');
+    document.getElementById('songStepsCount').textContent=song?`(${song.steps.length})`:'';
+    if(!song||!song.steps.length){list.innerHTML='<div class="song-empty">No steps yet — tap a sound below to add it.</div>';destroySortable();return}
+    list.innerHTML=song.steps.map((step,i)=>{
+      const s=AppState.sounds.find(x=>x.id===step.soundId);
+      return`<div class="song-step" data-idx="${i}"><span class="ss-num">${i+1}</span><span class="ss-icon">${s?s.icon:'❓'}</span><span class="ss-name">${s?s.name:'(missing sound)'}</span><input type="number" class="ss-gap" data-idx="${i}" min="0" max="5000" step="50" value="${step.gapMs??150}" title="Gap after (ms)"><button class="ss-del" data-idx="${i}">✕</button></div>`;
+    }).join('');
+    initSortable();
+  }
+
+  function initSortable(){
+    destroySortable();
+    if(typeof Sortable==='undefined')return;
+    sortableInstance=new Sortable(document.getElementById('songStepsList'),{animation:150,delay:150,delayOnTouchOnly:true,filter:'.ss-gap,.ss-del',preventOnFilter:false,ghostClass:'sortable-ghost',onEnd:async evt=>{
+      const song=activeSong();if(!song||evt.oldIndex===evt.newIndex)return;
+      const [moved]=song.steps.splice(evt.oldIndex,1);song.steps.splice(evt.newIndex,0,moved);
+      await Storage.saveSong(song);renderSteps();
+    }});
+  }
+  function destroySortable(){if(sortableInstance){sortableInstance.destroy();sortableInstance=null}}
+
+  function renderLibrary(){
+    const list=document.getElementById('songLibList');
+    const sounds=AppState.sounds.filter(s=>!s.tts);
+    if(!sounds.length){list.innerHTML='<div class="lib-pick-empty">No sounds in your library yet</div>';return}
+    list.innerHTML=sounds.map(s=>`<div class="lib-pick-item" data-id="${s.id}"><div class="lp-icon pad-${s.color}">${s.icon}</div><span class="lp-name">${s.name}</span><span class="lp-dur">${s.bank||'Main'}</span></div>`).join('');
+  }
+
+  async function addStep(soundId){
+    const song=activeSong();if(!song)return;
+    song.steps.push({soundId,gapMs:150});
+    await Storage.saveSong(song);renderSteps();renderSelect();
+  }
+
+  async function removeStep(idx){
+    const song=activeSong();if(!song)return;
+    song.steps.splice(idx,1);
+    await Storage.saveSong(song);renderSteps();renderSelect();
+  }
+
+  async function setGap(idx,ms){
+    const song=activeSong();if(!song||!song.steps[idx])return;
+    song.steps[idx].gapMs=Math.max(0,parseInt(ms,10)||0);
+    await Storage.saveSong(song);
+  }
+
+  function selectSong(id){activeSongId=id;renderSteps();updateControls()}
+
+  async function renameSong(){
+    const song=activeSong();if(!song)return;
+    const n=prompt('Song name:',song.name);
+    if(!n)return;
+    song.name=n.trim()||song.name;
+    await Storage.saveSong(song);renderSelect();
+  }
+
+  async function deleteSong(){
+    const song=activeSong();if(!song)return;
+    if(!confirm(`Delete "${song.name}"?`))return;
+    stopSong();
+    await Storage.deleteSong(song.id);
+    songs=songs.filter(s=>s.id!==song.id);
+    if(!songs.length)await createSong('My First Song',true);
+    activeSongId=songs[0].id;
+    renderSelect();renderSteps();updateControls();UI.showToast('Song deleted');
+  }
+
+  function toggleLoop(){
+    const song=activeSong();if(!song)return;
+    song.loop=!song.loop;Storage.saveSong(song);updateControls();
+  }
+
+  function updateControls(){
+    const song=activeSong();
+    document.getElementById('songLoopBtn').classList.toggle('active',!!song?.loop);
+    const btn=document.getElementById('songPlayBtn');
+    btn.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop Song':'<span>▶</span> Play Song';
+  }
+
+  async function playSong(){
+    const song=activeSong();
+    if(!song||!song.steps.length){UI.showToast('Add some steps first');return}
+    if(AppState.songPlaying){stopSong();return}
+    const token=++playToken;
+    AppState.songPlaying=true;updateControls();
+    do{
+      for(const step of song.steps){
+        if(token!==playToken)return;
+        const buf=await AudioEngine.getBuffer(step.soundId);
+        if(!buf)continue;
+        const s=AppState.sounds.find(x=>x.id===step.soundId);
+        await AudioEngine.play(step.soundId,(s?.volume||80)/100,false);
+        UI.renderGrid();
+        await wait(buf.duration*1000);
+        if(token!==playToken)return;
+        await wait(step.gapMs??150);
+      }
+    }while(song.loop&&token===playToken);
+    if(token===playToken){AppState.songPlaying=false;updateControls()}
+  }
+
+  function stopSong(){playToken++;AudioEngine.stopAll();AppState.songPlaying=false;updateControls();UI.renderGrid()}
+
+  return{open,createSong,selectSong,renameSong,deleteSong,toggleLoop,playSong,stopSong,addStep,removeStep,setGap,renderLibrary};
+})();
+
 // ═══ UI ═══
 const UI={
   getSoundsForBank(){return AppState.sounds.filter(s=>(s.bank||'Main')===AppState.activeBank).sort((a,b)=>(a.order??0)-(b.order??0))},
@@ -1122,7 +1487,7 @@ const UI={
   renderBanks(){document.getElementById('bankBar').innerHTML=AppState.banks.map(b=>`<button class="bank-tab ${b===AppState.activeBank?'active':''}" data-bank="${b}">${b}<span class="bank-count">${AppState.sounds.filter(s=>(s.bank||'Main')===b).length}</span></button>`).join('')+'<button class="bank-add-btn" id="bankAddQuick">+</button>'},
   renderCategories(){const cats=new Set(['All']);this.getSoundsForBank().forEach(s=>cats.add(s.category));document.getElementById('categories').innerHTML=[...cats].map(c=>`<button class="cat-chip ${c===AppState.activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join('')},
   renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}">${WaveThumb.get(s.id)?`<img class="pad-wave" src="${WaveThumb.get(s.id)}" alt="">`:''}<span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span>${(s.favorite&&!AppState.editMode)?'<span class="pad-fav">⭐</span>':''}<span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}${s.hotkey?`<span class="pad-hotkey">${s.hotkey.toUpperCase()}</span>`:''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
-  initSortable(){this.destroySortable();AppState.sortableInstance=new Sortable(document.getElementById('soundGrid'),{animation:200,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',delay:100,delayOnTouchOnly:true,onEnd:async evt=>{if(evt.oldIndex===evt.newIndex)return;const pads=[...document.getElementById('soundGrid').querySelectorAll('.sound-pad')];for(let i=0;i<pads.length;i++){const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);if(s){s.order=i;await Storage.saveMeta(s)}}AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));this.renderGrid()}})},
+  initSortable(){this.destroySortable();if(typeof Sortable==='undefined')return;AppState.sortableInstance=new Sortable(document.getElementById('soundGrid'),{animation:200,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',delay:100,delayOnTouchOnly:true,onEnd:async evt=>{if(evt.oldIndex===evt.newIndex)return;const pads=[...document.getElementById('soundGrid').querySelectorAll('.sound-pad')];for(let i=0;i<pads.length;i++){const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);if(s){s.order=i;await Storage.saveMeta(s)}}AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));this.renderGrid()}})},
   destroySortable(){if(AppState.sortableInstance){AppState.sortableInstance.destroy();AppState.sortableInstance=null}},
   updateBankSelects(){['uploadBank','editBank','chopBank','vfxBank','ttsBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
   setupColorSelect(){document.getElementById('editColor').innerHTML=CONFIG.PAD_COLORS.map(c=>`<option value="${c.name}">${c.name[0].toUpperCase()+c.name.slice(1)}</option>`).join('')},
@@ -1134,6 +1499,19 @@ const UI={
 };
 
 // ═══ EVENTS ═══
+// ═══ ★ MODE SWITCHER ═══
+function switchMode(mode){
+  if(mode===AppState.mode)return;
+  AppState.mode=mode;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===mode));
+  document.getElementById('padsView').style.display=mode==='pads'?'contents':'none';
+  document.getElementById('bottomBar').style.display=mode==='pads'?'':'none';
+  document.getElementById('notesView').style.display=mode==='notes'?'flex':'none';
+  document.getElementById('songsView').style.display=mode==='songs'?'block':'none';
+  if(mode==='notes')Notes.render();
+  else if(mode==='songs')SongBuilder.open();
+}
+
 function setupEvents(){
   document.getElementById('bankBar').addEventListener('click',e=>{const tab=e.target.closest('.bank-tab'),add=e.target.closest('#bankAddQuick');if(tab){AppState.activeBank=tab.dataset.bank;AppState.activeCategory='All';UI.renderBanks();UI.renderCategories();UI.renderGrid()}else if(add){const n=prompt('New bank name:');if(n)Banks.add(n)}});
   document.getElementById('categories').addEventListener('click',e=>{const c=e.target.closest('.cat-chip');if(!c)return;AppState.activeCategory=c.dataset.cat;UI.renderCategories();UI.renderGrid()});
@@ -1239,6 +1617,36 @@ function setupEvents(){
   document.getElementById('exportBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');ExportImport.exportLib()});document.getElementById('exportDone').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('open'));document.getElementById('exportModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('exportModal').classList.remove('open')});
   document.getElementById('importBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');document.getElementById('importFileInput').click()});document.getElementById('importFileInput').addEventListener('change',e=>{if(e.target.files[0])ExportImport.importFile(e.target.files[0]);e.target.value=''});document.getElementById('importCancel').addEventListener('click',()=>{document.getElementById('importPreviewModal').classList.remove('open');window._iData=null});document.getElementById('importConfirm').addEventListener('click',()=>ExportImport.confirmImport());document.getElementById('importPreviewModal').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('importPreviewModal').classList.remove('open');window._iData=null}});
   document.getElementById('clearAllBtn').addEventListener('click',async()=>{if(!confirm('Delete ALL sounds?')||!confirm('Cannot undo.'))return;AudioEngine.stopAll();AppState.decodedBuffers.clear();WaveThumb.clear();await Storage.clearAll();AppState.sounds=[];UI.renderBanks();UI.renderCategories();UI.renderGrid();document.getElementById('settingsModal').classList.remove('open');UI.showToast('Cleared')});
+
+  // ★ Mode switcher (Pads / Notes / Songs)
+  document.getElementById('modeTabs').addEventListener('click',e=>{const t=e.target.closest('.mode-tab');if(t)switchMode(t.dataset.mode)});
+
+  // ★ Notes mode
+  document.getElementById('noteNewTextBtn').addEventListener('click',()=>Notes.openNew('text'));
+  document.getElementById('noteNewVoiceBtn').addEventListener('click',()=>Notes.toggleRecord());
+  document.getElementById('notesList').addEventListener('click',e=>{
+    const del=e.target.closest('.note-del-btn'),playBtn=e.target.closest('.note-play-btn');
+    if(del){Notes.del(del.dataset.id);return}
+    if(playBtn){Notes.play(playBtn.dataset.id);return}
+    const item=e.target.closest('.note-item');
+    if(item)Notes.openEdit(item.dataset.id);
+  });
+  document.getElementById('noteSaveBtn').addEventListener('click',()=>Notes.save());
+  document.getElementById('noteDeleteBtn').addEventListener('click',()=>Notes.deleteCurrent());
+  document.getElementById('notePlayPreview').addEventListener('click',()=>Notes.previewPending());
+  document.getElementById('noteCloseBtn').addEventListener('click',()=>Notes.close());
+  document.getElementById('noteModal').addEventListener('click',e=>{if(e.target===e.currentTarget)Notes.close()});
+
+  // ★ Song Builder mode
+  document.getElementById('songSelect').addEventListener('change',e=>SongBuilder.selectSong(e.target.value));
+  document.getElementById('songNewBtn').addEventListener('click',async()=>{const n=prompt('New song name:');if(n)await SongBuilder.createSong(n)});
+  document.getElementById('songRenameBtn').addEventListener('click',()=>SongBuilder.renameSong());
+  document.getElementById('songDeleteBtn').addEventListener('click',()=>SongBuilder.deleteSong());
+  document.getElementById('songPlayBtn').addEventListener('click',()=>SongBuilder.playSong());
+  document.getElementById('songLoopBtn').addEventListener('click',()=>SongBuilder.toggleLoop());
+  document.getElementById('songStepsList').addEventListener('click',e=>{const del=e.target.closest('.ss-del');if(del)SongBuilder.removeStep(parseInt(del.dataset.idx,10))});
+  document.getElementById('songStepsList').addEventListener('change',e=>{const gap=e.target.closest('.ss-gap');if(gap)SongBuilder.setGap(parseInt(gap.dataset.idx,10),gap.value)});
+  document.getElementById('songLibList').addEventListener('click',e=>{const item=e.target.closest('.lib-pick-item');if(item)SongBuilder.addStep(item.dataset.id)});
 
   document.addEventListener('click',()=>AudioEngine.getContext(),{once:true});document.addEventListener('touchstart',()=>AudioEngine.getContext(),{once:true});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const c=AudioEngine.getContext();if(c.state==='suspended')c.resume()}});
