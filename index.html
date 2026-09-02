@@ -247,6 +247,27 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .song-step .ss-del{width:26px;height:26px;border-radius:7px;border:none;background:rgba(255,61,113,.15);color:var(--accent);font-size:13px;cursor:pointer;flex-shrink:0}
 .song-lib-list{max-height:230px;overflow-y:auto;border:1.5px solid var(--surface3);border-radius:14px;background:var(--surface2)}
 .song-empty{text-align:center;color:var(--text2);font-size:13px;padding:16px}
+.song-transport{display:flex;align-items:center;gap:10px;padding:0 0 12px}
+.song-transport .tp-lab{font-size:12px;font-weight:700;color:var(--accent2);width:66px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.song-transport input[type=range]{flex:1;height:6px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none}
+.song-transport input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent2);cursor:pointer}
+.song-transport select{height:34px;border-radius:10px;border:1.5px solid var(--surface3);background:var(--surface2);color:var(--text);font-size:12px;padding:0 6px}
+.song-add-row{display:flex;gap:8px;margin-top:8px}
+.song-add-row .chop-btn{flex:1;justify-content:center}
+.sl-head{display:flex;align-items:center;gap:8px}
+.sl-icon{font-size:18px;flex-shrink:0}
+.chain-note{font-size:11px;color:var(--text2);padding:6px 2px 0}
+.grid-row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin-top:8px}
+.grid-row .cell{height:30px;border-radius:6px;border:1.5px solid var(--surface3);background:var(--surface);cursor:pointer;padding:0;transition:background .08s,transform .08s}
+.grid-row .cell.beat{border-color:#3a3a55}
+.grid-row .cell.on{background:var(--accent2);border-color:var(--accent2)}
+.grid-row .cell.ph{outline:2px solid var(--accent4);outline-offset:-2px}
+.grid-row .cell:active{transform:scale(.88)}
+.sl-extra{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--surface3)}
+.sl-vol-lab{font-size:11px;color:var(--text2);font-weight:700}
+.sl-vol{flex:1;height:5px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none}
+.sl-vol::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent3);cursor:pointer}
+.sl-mini{background:var(--surface3);color:var(--text);border:none;border-radius:8px;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer}
 .song-layers{display:flex;flex-direction:column;gap:8px}
 .song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
@@ -297,15 +318,25 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       <button class="icon-btn" id="songDeleteBtn" title="Delete song">🗑️</button>
     </div>
     <div class="song-controls-row">
-      <button class="action-btn btn-record" id="songPlayBtn" style="flex:1"><span>▶</span> Play Song</button>
+      <button class="action-btn btn-record" id="songPlayBtn" style="flex:1"><span>▶</span> Play</button>
       <button class="icon-btn" id="songLoopBtn" title="Loop song">🔁</button>
+    </div>
+    <div class="song-transport">
+      <span class="tp-lab" id="songBpmVal">100 BPM</span>
+      <input type="range" id="songBpm" min="40" max="200" step="1" value="100">
+      <select id="songBars" title="Bars"><option value="1">1 bar</option><option value="2">2 bars</option></select>
     </div>
     <div class="song-section-label">Layers <span style="font-weight:400;text-transform:none;letter-spacing:0">— all play together</span></div>
     <div class="song-layers" id="songLayers"></div>
-    <button class="chop-btn" id="songAddLayerBtn" style="width:100%;justify-content:center;margin-top:8px">➕ Add Layer</button>
-    <div class="song-section-label">Steps <span id="songStepsCount"></span></div>
-    <div class="song-steps" id="songStepsList"></div>
-    <div class="song-section-label">Tap a sound to add it</div>
+    <div class="song-add-row">
+      <button class="chop-btn" id="songAddBeatBtn">➕ Beat Layer</button>
+      <button class="chop-btn" id="songAddChainBtn">➕ Chain Layer</button>
+    </div>
+    <div id="songChainWrap" style="display:none">
+      <div class="song-section-label">Steps <span id="songStepsCount"></span></div>
+      <div class="song-steps" id="songStepsList"></div>
+    </div>
+    <div class="song-section-label" id="songLibHint">Tap a sound to add it</div>
     <div class="song-lib-list" id="songLibList"></div>
   </div>
 
@@ -1421,46 +1452,73 @@ const Notes=(()=>{
 })();
 
 // ═══ SONG BUILDER MODE ═══
-// A song is a set of LAYERS that all start together and run in parallel.
-// Within a layer, steps still play one after another (sound length + gap), so a
-// single-layer song behaves exactly like the old sequential builder. Everything
-// is scheduled against the Web Audio clock so layers stay locked together.
+// Two kinds of layer, both running in parallel on the Web Audio clock:
+//   grid  - one sound + a tappable 16th-note pattern, locked to the song BPM
+//   chain - the older "play these sounds in order" sequence (length + gap)
+// Grid layers are what make this a beat machine rather than a playlist.
 const SongBuilder=(()=>{
-  const LOOKAHEAD=.25, TICK=60;
-  let songs=[],activeId=null,activeLayerId=null,timer=null,states=[],playToken=0,hlTimers=[];
+  const LOOKAHEAD=.3, TICK=40;
+  let songs=[],activeId=null,activeLayerId=null,timer=null,chainStates=[],
+      cycleNext=0,cyclesDone=0,startedAt=0,playToken=0,hlTimers=[];
   const active=()=>songs.find(s=>s.id===activeId)||null;
   const activeLayer=()=>{const s=active();if(!s)return null;return s.layers.find(l=>l.id===activeLayerId)||s.layers[0]||null};
   const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const uid=()=>crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
 
-  // Older songs stored a flat steps[] array; fold that into a single layer.
+  const patLen  = s=>(s.bars||1)*16;
+  const stepDur = s=>(60/(s.bpm||100))/4;          // 16th note
+  const cycleDur= s=>patLen(s)*stepDur(s);
+
   function normalise(song){
-    if(!song.layers){
-      song.layers=[{id:uid(),name:'Layer 1',steps:song.steps||[],loop:!!song.loop,muted:false,volume:1}];
+    if(song.bpm==null)song.bpm=100;
+    if(song.bars==null)song.bars=1;
+    if(song.loop==null)song.loop=true;
+    if(!song.layers){   // legacy flat steps[] -> one chain layer
+      song.layers=[{id:uid(),name:'Layer 1',type:'chain',steps:song.steps||[],loop:true,muted:false,volume:1}];
       delete song.steps;
     }
-    song.layers.forEach(l=>{if(l.volume==null)l.volume=1;if(!l.steps)l.steps=[]});
+    song.layers.forEach(l=>{
+      if(!l.type)l.type=l.steps?'chain':'grid';
+      if(l.volume==null)l.volume=1;
+      if(l.type==='chain'&&!l.steps)l.steps=[];
+      if(l.type==='grid'){
+        const n=patLen(song);
+        if(!Array.isArray(l.pattern))l.pattern=new Array(n).fill(0);
+        if(l.pattern.length!==n){const q=l.pattern.slice(0,n);while(q.length<n)q.push(0);l.pattern=q}
+      }
+    });
     return song;
   }
+  function resizePatterns(song){song.layers.forEach(l=>{if(l.type==='grid'){
+    const n=patLen(song),q=l.pattern.slice(0,n);while(q.length<n)q.push(0);l.pattern=q}})}
 
+  // Guarded: switchMode() fires open() without awaiting, so two concurrent
+  // calls could both find empty storage and each create a starter song.
+  let opening=null;
   async function open(){
+    if(opening)return opening;
+    opening=_open();
+    try{await opening}finally{opening=null}
+  }
+  async function _open(){
     let raw=[];
     try{raw=await Storage.loadAllSongs()}catch(e){raw=[]}
-    // Migrate legacy flat-steps songs once and write the converted shape back,
-    // otherwise storage keeps the old format and re-converts on every load.
     const migrated=[];
-    songs=raw.map(sg=>{const had=!!sg.layers;const n=normalise(sg);if(!had)migrated.push(n);return n});
+    songs=raw.map(sg=>{const before=JSON.stringify({l:sg.layers,b:sg.bpm});const n=normalise(sg);
+      if(JSON.stringify({l:n.layers,b:n.bpm})!==before)migrated.push(n);return n});
     for(const sg of migrated){try{await Storage.saveSong(sg)}catch(e){}}
-    if(!songs.length)await create('My First Song',true);
+    if(!songs.length)await create('My First Beat',true);
     if(!activeId||!songs.some(s=>s.id===activeId))activeId=songs[0]?songs[0].id:null;
     const s=active();
     if(s&&(!activeLayerId||!s.layers.some(l=>l.id===activeLayerId)))activeLayerId=s.layers[0]?s.layers[0].id:null;
     renderAll();
   }
-  function renderAll(){renderSelect();renderLayers();renderSteps();renderLibrary();updateControls()}
+  function renderAll(){renderSelect();renderTransport();renderLayers();renderSteps();renderLibrary();updateControls()}
 
   async function create(name,silent){
-    const song=normalise({id:uid(),name:name||`Song ${songs.length+1}`,layers:null,steps:[],loop:false,createdAt:new Date().toISOString()});
+    const song=normalise({id:uid(),name:name||`Song ${songs.length+1}`,bpm:100,bars:1,loop:true,
+      layers:[{id:uid(),name:'Beat 1',type:'grid',soundId:null,pattern:new Array(16).fill(0),loop:true,muted:false,volume:1}],
+      createdAt:new Date().toISOString()});
     try{await Storage.saveSong(song)}catch(e){}
     songs.push(song);activeId=song.id;activeLayerId=song.layers[0].id;
     if(!silent){renderAll();UI.showToast('New song created')}
@@ -1470,37 +1528,64 @@ const SongBuilder=(()=>{
 
   function renderSelect(){
     const sel=document.getElementById('songSelect');if(!sel)return;
-    sel.innerHTML=songs.map(s=>{const n=s.layers.reduce((a,l)=>a+l.steps.length,0);
-      return`<option value="${s.id}">${esc(s.name)} (${n})</option>`}).join('');
+    sel.innerHTML=songs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
     if(activeId)sel.value=activeId;
+  }
+  function renderTransport(){
+    const s=active();if(!s)return;
+    const bpm=document.getElementById('songBpm'),bpmVal=document.getElementById('songBpmVal'),bars=document.getElementById('songBars');
+    if(bpm){bpm.value=s.bpm;bpmVal.textContent=s.bpm+' BPM'}
+    if(bars)bars.value=String(s.bars);
   }
   function renderLayers(){
     const box=document.getElementById('songLayers'),song=active();if(!box)return;
     if(!song){box.innerHTML='';return}
-    box.innerHTML=song.layers.map(l=>
-      `<div class="song-layer ${l.id===activeLayerId?'sel':''}" data-lid="${l.id}">
-         <span class="sl-name">${esc(l.name)}</span>
-         <span class="sl-count">${l.steps.length}</span>
-         <button class="sl-btn ${l.muted?'off':''}" data-act="mute" data-lid="${l.id}" title="Mute">${l.muted?'🔇':'🔊'}</button>
-         <button class="sl-btn ${l.loop?'on':''}" data-act="loop" data-lid="${l.id}" title="Loop layer">🔁</button>
-         <button class="sl-btn del" data-act="del" data-lid="${l.id}" title="Delete layer">✕</button>
-       </div>`).join('');
+    box.innerHTML=song.layers.map(l=>{
+      const sel=l.id===activeLayerId;
+      const snd=l.soundId?AppState.sounds.find(x=>x.id===l.soundId):null;
+      let body;
+      if(l.type==='grid'){
+        body=`<div class="grid-row" data-lid="${l.id}">`+l.pattern.map((on,i)=>
+          `<button class="cell ${on?'on':''} ${i%4===0?'beat':''}" data-lid="${l.id}" data-i="${i}"></button>`).join('')+`</div>`;
+      }else{
+        body=`<div class="chain-note">${l.steps.length} step${l.steps.length===1?'':'s'} — select to edit below</div>`;
+      }
+      return`<div class="song-layer ${sel?'sel':''}" data-lid="${l.id}">
+        <div class="sl-head" data-lid="${l.id}">
+          <span class="sl-icon">${l.type==='grid'?(snd?snd.icon:'➕'):'🔗'}</span>
+          <span class="sl-name">${esc(l.type==='grid'?(snd?snd.name:'tap a sound below'):l.name)}</span>
+          <button class="sl-btn ${l.muted?'off':''}" data-act="mute" data-lid="${l.id}" title="Mute">${l.muted?'🔇':'🔊'}</button>
+          <button class="sl-btn del" data-act="del" data-lid="${l.id}" title="Delete layer">✕</button>
+        </div>
+        ${body}
+        ${sel?`<div class="sl-extra">
+          <span class="sl-vol-lab">Vol</span>
+          <input type="range" class="sl-vol" data-lid="${l.id}" min="0" max="100" value="${Math.round((l.volume==null?1:l.volume)*100)}">
+          ${l.type==='grid'?`<button class="sl-mini" data-act="clear" data-lid="${l.id}">Clear</button>`:''}
+          <button class="sl-mini" data-act="rename" data-lid="${l.id}">Rename</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
   }
   function renderSteps(){
-    const list=document.getElementById('songStepsList'),layer=activeLayer();if(!list)return;
-    document.getElementById('songStepsCount').textContent=layer?`— ${layer.name} (${layer.steps.length})`:'';
-    if(!layer||!layer.steps.length){list.innerHTML='<div class="song-empty">No steps in this layer — tap a sound below to add one.</div>';return}
-    list.innerHTML=layer.steps.map((step,i)=>{
+    const wrap=document.getElementById('songChainWrap'),list=document.getElementById('songStepsList'),l=activeLayer();
+    if(!list||!wrap)return;
+    if(!l||l.type!=='chain'){wrap.style.display='none';return}
+    wrap.style.display='';
+    document.getElementById('songStepsCount').textContent=`— ${esc(l.name)} (${l.steps.length})`;
+    if(!l.steps.length){list.innerHTML='<div class="song-empty">No steps — tap a sound below to add one.</div>';return}
+    list.innerHTML=l.steps.map((step,i)=>{
       const s=AppState.sounds.find(x=>x.id===step.soundId);
-      return`<div class="song-step" data-idx="${i}"><span class="ss-num">${i+1}</span><span class="ss-icon">${s?s.icon:'❓'}</span><span class="ss-name">${s?esc(s.name):'(missing sound)'}</span>`+
-            `<button class="ss-move" data-dir="up" data-idx="${i}" title="Move up">▲</button>`+
-            `<button class="ss-move" data-dir="down" data-idx="${i}" title="Move down">▼</button>`+
+      return`<div class="song-step" data-idx="${i}"><span class="ss-num">${i+1}</span><span class="ss-icon">${s?s.icon:'❓'}</span><span class="ss-name">${s?esc(s.name):'(missing)'}</span>`+
+            `<button class="ss-move" data-dir="up" data-idx="${i}">▲</button><button class="ss-move" data-dir="down" data-idx="${i}">▼</button>`+
             `<input type="number" class="ss-gap" data-idx="${i}" min="0" max="5000" step="50" value="${step.gapMs==null?150:step.gapMs}" title="Gap after (ms)">`+
             `<button class="ss-del" data-idx="${i}">✕</button></div>`;
     }).join('');
   }
   function renderLibrary(){
-    const list=document.getElementById('songLibList');if(!list)return;
+    const list=document.getElementById('songLibList'),l=activeLayer();if(!list)return;
+    const hint=document.getElementById('songLibHint');
+    if(hint)hint.textContent=l&&l.type==='grid'?'Tap a sound to put it on this layer':'Tap a sound to add a step';
     const sounds=AppState.sounds.filter(s=>!s.tts);
     if(!sounds.length){list.innerHTML='<div class="lib-pick-empty">No sounds in your library yet</div>';return}
     list.innerHTML=sounds.map(s=>`<div class="lib-pick-item" data-id="${s.id}"><div class="lp-icon pad-${s.color}">${s.icon}</div><span class="lp-name">${esc(s.name)}</span><span class="lp-dur">${esc(s.bank||'Main')}</span></div>`).join('');
@@ -1508,45 +1593,64 @@ const SongBuilder=(()=>{
   function updateControls(){
     const song=active(),lp=document.getElementById('songLoopBtn'),pb=document.getElementById('songPlayBtn');
     if(lp)lp.classList.toggle('active',!!(song&&song.loop));
-    if(pb)pb.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop Song':'<span>▶</span> Play Song';
+    if(pb)pb.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop':'<span>▶</span> Play';
   }
 
   // ── editing ──
-  async function addLayer(){
+  async function setBpm(v){const s=active();if(!s)return;s.bpm=Math.max(40,Math.min(240,parseInt(v,10)||100));
+    document.getElementById('songBpmVal').textContent=s.bpm+' BPM';await persist()}
+  async function setBars(v){const s=active();if(!s)return;s.bars=Math.max(1,Math.min(2,parseInt(v,10)||1));
+    resizePatterns(s);await persist();renderLayers()}
+  async function toggleCell(lid,i){
+    const s=active();if(!s)return;const l=s.layers.find(x=>x.id===lid);if(!l||l.type!=='grid')return;
+    l.pattern[i]=l.pattern[i]?0:1;
+    const el=document.querySelector(`.cell[data-lid="${lid}"][data-i="${i}"]`);
+    if(el)el.classList.toggle('on',!!l.pattern[i]);
+    if(l.pattern[i]&&l.soundId&&!AppState.songPlaying){
+      const snd=AppState.sounds.find(x=>x.id===l.soundId);
+      AudioEngine.playScheduled(l.soundId,((snd&&snd.volume!=null?snd.volume:80)/100)*(l.volume==null?1:l.volume),AudioEngine.getContext().currentTime+.01);
+    }
+    await persist();
+  }
+  async function addLayer(type){
     const song=active();if(!song)return;
-    const l={id:uid(),name:`Layer ${song.layers.length+1}`,steps:[],loop:false,muted:false,volume:1};
-    song.layers.push(l);activeLayerId=l.id;await persist();renderAll();UI.showToast(`${l.name} added`);
+    const l=type==='chain'
+      ?{id:uid(),name:`Chain ${song.layers.length+1}`,type:'chain',steps:[],loop:true,muted:false,volume:1}
+      :{id:uid(),name:`Beat ${song.layers.length+1}`,type:'grid',soundId:null,pattern:new Array(patLen(song)).fill(0),loop:true,muted:false,volume:1};
+    song.layers.push(l);activeLayerId=l.id;await persist();renderAll();
   }
   async function removeLayer(lid){
     const song=active();if(!song)return;
     if(song.layers.length<=1){UI.showToast('A song needs at least one layer');return}
-    const l=song.layers.find(x=>x.id===lid);
-    if(l&&l.steps.length&&!confirm(`Delete "${l.name}" and its ${l.steps.length} step(s)?`))return;
     song.layers=song.layers.filter(x=>x.id!==lid);
     if(activeLayerId===lid)activeLayerId=song.layers[0].id;
     await persist();renderAll();
   }
-  function selectLayer(lid){activeLayerId=lid;renderLayers();renderSteps()}
+  function selectLayer(lid){activeLayerId=lid;renderLayers();renderSteps();renderLibrary()}
   async function toggleLayer(lid,what){
-    const song=active();if(!song)return;
-    const l=song.layers.find(x=>x.id===lid);if(!l)return;
-    if(what==='mute')l.muted=!l.muted; else l.loop=!l.loop;
-    await persist();renderLayers();
+    const song=active();if(!song)return;const l=song.layers.find(x=>x.id===lid);if(!l)return;
+    if(what==='mute')l.muted=!l.muted;
+    else if(what==='clear'&&l.type==='grid')l.pattern=new Array(patLen(song)).fill(0);
+    else if(what==='rename'){const n=prompt('Layer name:',l.name);if(!n)return;l.name=n.trim()||l.name}
+    await persist();renderLayers();renderSteps();
   }
+  async function setLayerVolume(lid,v){
+    const song=active();if(!song)return;const l=song.layers.find(x=>x.id===lid);if(!l)return;
+    l.volume=Math.max(0,Math.min(1,(parseInt(v,10)||0)/100));await persist();
+  }
+  // Library tap: assign to a grid layer, or append a step to a chain layer
   async function addStep(soundId){
     const song=active();if(!song)return;
-    let layer=activeLayer();
-    if(!layer){layer=song.layers[0];activeLayerId=layer.id}
-    layer.steps.push({soundId,gapMs:150});
-    await persist();renderSteps();renderLayers();renderSelect();
+    let l=activeLayer(); if(!l){l=song.layers[0];activeLayerId=l.id}
+    if(l.type==='grid'){l.soundId=soundId;await persist();renderLayers();UI.showToast('Sound set for this layer')}
+    else{l.steps.push({soundId,gapMs:150});await persist();renderSteps();renderLayers()}
   }
-  async function removeStep(i){const l=activeLayer();if(!l)return;l.steps.splice(i,1);await persist();renderSteps();renderLayers();renderSelect()}
-  async function moveStep(i,dir){
-    const l=activeLayer();if(!l)return;
+  async function removeStep(i){const l=activeLayer();if(!l||l.type!=='chain')return;l.steps.splice(i,1);await persist();renderSteps();renderLayers()}
+  async function moveStep(i,dir){const l=activeLayer();if(!l||l.type!=='chain')return;
     const j=dir==='up'?i-1:i+1;if(j<0||j>=l.steps.length)return;
-    const t=l.steps[i];l.steps[i]=l.steps[j];l.steps[j]=t;await persist();renderSteps();
-  }
-  async function setGap(i,ms){const l=activeLayer();if(!l||!l.steps[i])return;l.steps[i].gapMs=Math.max(0,parseInt(ms,10)||0);await persist()}
+    const t=l.steps[i];l.steps[i]=l.steps[j];l.steps[j]=t;await persist();renderSteps()}
+  async function setGap(i,ms){const l=activeLayer();if(!l||l.type!=='chain'||!l.steps[i])return;
+    l.steps[i].gapMs=Math.max(0,parseInt(ms,10)||0);await persist()}
   function select(id){activeId=id;const s=active();activeLayerId=s&&s.layers[0]?s.layers[0].id:null;renderAll()}
   async function rename(){const s=active();if(!s)return;const n=prompt('Song name:',s.name);if(!n)return;s.name=n.trim()||s.name;await persist();renderSelect()}
   async function remove(){
@@ -1555,60 +1659,77 @@ const SongBuilder=(()=>{
     stop();
     try{await Storage.deleteSong(s.id)}catch(e){}
     songs=songs.filter(x=>x.id!==s.id);
-    if(!songs.length)await create('My First Song',true);
+    if(!songs.length)await create('My First Beat',true);
     activeId=songs[0].id;activeLayerId=songs[0].layers[0].id;renderAll();UI.showToast('Song deleted');
   }
   function toggleLoop(){const s=active();if(!s)return;s.loop=!s.loop;persist();updateControls()}
 
-  // ── playback: look-ahead scheduler over all layers at once ──
-  function clearHighlights(){hlTimers.forEach(clearTimeout);hlTimers=[];
-    document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.remove('playing-step'))}
-  function highlightAt(lid,idx,when){
-    const c=AudioEngine.getContext(),delay=Math.max(0,(when-c.currentTime)*1000);
-    hlTimers.push(setTimeout(()=>{
-      if(lid!==activeLayerId)return;
-      document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.toggle('playing-step',+el.dataset.idx===idx));
-    },delay));
+  // ── playback ──
+  function clearHighlights(){
+    hlTimers.forEach(clearTimeout);hlTimers=[];
+    document.querySelectorAll('#songLayers .cell.ph').forEach(el=>el.classList.remove('ph'));
+    document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.remove('playing-step'));
   }
-  function initStates(song,base){
-    return song.layers.map(l=>({layer:l,idx:0,next:base,done:!l.steps.length}));
+  function fire(soundId,layer,when){
+    const snd=AppState.sounds.find(x=>x.id===soundId);
+    const vol=((snd&&snd.volume!=null?snd.volume:80)/100)*(layer.volume==null?1:layer.volume);
+    AudioEngine.playScheduled(soundId,vol,when);
+  }
+  function scheduleCycle(song,base){
+    const sd=stepDur(song),n=patLen(song);
+    for(const l of song.layers){
+      if(l.type!=='grid'||l.muted||!l.soundId)continue;
+      for(let i=0;i<n;i++)if(l.pattern[i])fire(l.soundId,l,base+i*sd);
+    }
+  }
+  function initChain(song,base){
+    return song.layers.filter(l=>l.type==='chain')
+      .map(l=>({layer:l,idx:0,next:base,done:!l.steps.length}));
   }
   function tick(){
     const song=active();if(!song)return;
     const c=AudioEngine.getContext(),horizon=c.currentTime+LOOKAHEAD;
-    let active_=false,latest=0;
-    for(const st of states){
+
+    // grid cycles
+    let guard=0;
+    while(cycleNext<horizon&&guard++<8&&(song.loop||cyclesDone<1)){
+      scheduleCycle(song,cycleNext);
+      cycleNext+=cycleDur(song);cyclesDone++;
+    }
+    // chain layers
+    let chainActive=false,latest=cycleNext;
+    for(const st of chainStates){
       if(!st.done){
-        let guard=0;
-        while(st.next<horizon&&guard++<512){
+        let g=0;
+        while(st.next<horizon&&g++<256){
           if(st.idx>=st.layer.steps.length){
-            if(st.layer.loop&&st.layer.steps.length)st.idx=0;
-            else{st.done=true;break}
+            if(st.layer.loop&&st.layer.steps.length)st.idx=0; else {st.done=true;break}
           }
           const step=st.layer.steps[st.idx];
           const buf=AppState.decodedBuffers.get(step.soundId);
           const dur=buf?buf.duration:.2;
-          if(buf&&!st.layer.muted){
-            const snd=AppState.sounds.find(x=>x.id===step.soundId);
-            const vol=((snd&&snd.volume!=null?snd.volume:80)/100)*(st.layer.volume==null?1:st.layer.volume);
-            AudioEngine.playScheduled(step.soundId,vol,st.next);
-            highlightAt(st.layer.id,st.idx,st.next);
-          }
+          if(buf&&!st.layer.muted)fire(step.soundId,st.layer,st.next);
           st.next+=dur+(step.gapMs==null?150:step.gapMs)/1000;
           st.idx++;
         }
       }
-      if(!st.done)active_=true;
+      if(!st.done)chainActive=true;
       if(st.next>latest)latest=st.next;
     }
-    if(!active_){
-      if(song.loop){states=initStates(song,latest)}          // restart everything together
-      else{
-        const wait=Math.max(0,(latest-c.currentTime)*1000)+80;
-        const tok=playToken;
-        clearInterval(timer);timer=null;
-        setTimeout(()=>{if(tok===playToken)finish()},wait);
-      }
+    // playhead
+    const hasGrid=song.layers.some(l=>l.type==='grid');
+    if(hasGrid){
+      const sd=stepDur(song),n=patLen(song);
+      const cell=Math.max(0,Math.floor((c.currentTime-startedAt)/sd))%n;
+      document.querySelectorAll('#songLayers .cell').forEach(el=>{
+        el.classList.toggle('ph',+el.dataset.i===cell);
+      });
+    }
+    const gridDone=!song.loop&&cyclesDone>=1&&c.currentTime>=cycleNext-.02;
+    if(!chainActive&&(!hasGrid||gridDone||!song.loop)&&!song.loop){
+      const wait=Math.max(0,(latest-c.currentTime)*1000)+100;
+      const tok=playToken;clearInterval(timer);timer=null;
+      setTimeout(()=>{if(tok===playToken)finish()},wait);
     }
   }
   function finish(){AppState.songPlaying=false;clearHighlights();updateControls()}
@@ -1616,24 +1737,24 @@ const SongBuilder=(()=>{
   function play(){
     const song=active();
     if(!song){UI.showToast('No song selected');return}
-    const total=song.layers.reduce((a,l)=>a+l.steps.length,0);
-    if(!total){UI.showToast('Add some steps first');return}
+    const hits=song.layers.reduce((a,l)=>a+(l.type==='grid'?(l.soundId?l.pattern.filter(Boolean).length:0):l.steps.length),0);
+    if(!hits){UI.showToast('Tap some grid cells or add steps first');return}
     if(AppState.songPlaying){stop();return}
     playToken++;
     const c=AudioEngine.getContext();
-    states=initStates(song,c.currentTime+.08);
+    startedAt=c.currentTime+.08;
+    cycleNext=startedAt;cyclesDone=0;
+    chainStates=initChain(song,startedAt);
     AppState.songPlaying=true;updateControls();
-    tick();
-    clearInterval(timer);timer=setInterval(tick,TICK);
+    tick();clearInterval(timer);timer=setInterval(tick,TICK);
   }
   function stop(){
-    playToken++;
-    clearInterval(timer);timer=null;states=[];
+    playToken++;clearInterval(timer);timer=null;chainStates=[];cyclesDone=0;
     AudioEngine.stopScheduled();AudioEngine.stopAll();
     finish();UI.renderGrid();
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
-         addLayer,removeLayer,selectLayer,toggleLayer,renderLibrary};
+         addLayer,removeLayer,selectLayer,toggleLayer,setLayerVolume,setBpm,setBars,toggleCell,renderLibrary};
 })();
 
 // ═══ MEME PACK ═══
@@ -2097,11 +2218,23 @@ function setupEvents(){
   });
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
-  document.getElementById('songAddLayerBtn').addEventListener('click',()=>SongBuilder.addLayer());
+  document.getElementById('songAddBeatBtn').addEventListener('click',()=>SongBuilder.addLayer('grid'));
+  document.getElementById('songAddChainBtn').addEventListener('click',()=>SongBuilder.addLayer('chain'));
+  document.getElementById('songBpm').addEventListener('input',e=>SongBuilder.setBpm(e.target.value));
+  document.getElementById('songBars').addEventListener('change',e=>SongBuilder.setBars(e.target.value));
+  document.getElementById('songLayers').addEventListener('input',e=>{
+    const v=e.target.closest('.sl-vol');if(v)SongBuilder.setLayerVolume(v.dataset.lid,v.target?v.target.value:v.value);
+  });
   document.getElementById('songLayers').addEventListener('click',e=>{
-    const btn=e.target.closest('.sl-btn'),row=e.target.closest('.song-layer');
+    const cell=e.target.closest('.cell');
+    if(cell){SongBuilder.toggleCell(cell.dataset.lid,+cell.dataset.i);return}
+    const mini=e.target.closest('.sl-mini');
+    if(mini){SongBuilder.toggleLayer(mini.dataset.lid,mini.dataset.act);return}
+    const btn=e.target.closest('.sl-btn');
     if(btn){const act=btn.dataset.act,lid=btn.dataset.lid;
       if(act==='del')SongBuilder.removeLayer(lid);else SongBuilder.toggleLayer(lid,act);return}
+    if(e.target.closest('.sl-vol'))return;
+    const row=e.target.closest('.song-layer');
     if(row)SongBuilder.selectLayer(row.dataset.lid);
   });
 
