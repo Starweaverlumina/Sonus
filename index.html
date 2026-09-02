@@ -119,6 +119,13 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 /* ═══ ★ PAD WAVEFORM PREVIEW ═══ */
 .pad-wave{position:absolute;left:6px;right:6px;bottom:3px;height:16px;opacity:.4;z-index:0;pointer-events:none;object-fit:fill}
 
+/* ═══ ★ FAVORITES & HOTKEYS ═══ */
+.pad-fav{position:absolute;top:5px;right:7px;font-size:11px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.pad-hotkey{position:absolute;bottom:4px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.9);z-index:2;background:rgba(0,0,0,.45);padding:1px 4px;border-radius:4px;letter-spacing:.5px}
+.icon-btn.fav-active{background:var(--accent4);color:#000}
+#editFavToggle.active{background:var(--accent4);color:#000}
+.hotkey-capture-hint{font-size:11px;color:var(--text2);margin-top:4px}
+
 /* ═══ ★ VOICE CHANGER ═══ */
 .vfx-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
 .vfx-group-label{margin:10px 0 6px;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
@@ -182,6 +189,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <button class="icon-btn" id="voiceToggle" title="Voice">🎙️</button>
     <button class="icon-btn" id="editToggle" title="Edit">✏️</button>
     <button class="icon-btn" id="loopToggle" title="Loop">🔁</button>
+    <button class="icon-btn" id="favToggle" title="Favorites">⭐</button>
     <button class="icon-btn" id="settingsToggle" title="Settings">⚙️</button>
   </div></header>
   <div class="bank-bar" id="bankBar"></div>
@@ -266,12 +274,29 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       </div>
       <div class="kv"><div class="modal-field"><label>Bank</label><select id="vfxBank"></select></div><div class="modal-field"><label>Name</label><input type="text" id="vfxName" placeholder="Voice clip name"></div></div>
       <div class="chop-controls">
+        <button class="chop-btn" id="vfxReverse">◀ Reverse</button>
+        <button class="chop-btn" id="vfxEcho">〰 Echo</button>
         <button class="chop-btn" id="vfxPreview">▶ Preview</button>
         <button class="chop-btn primary" id="vfxSave">💾 Save as Pad</button>
         <button class="chop-btn" id="vfxNewSource">↺ New Source</button>
       </div>
     </div>
     <div class="modal-actions"><button class="cancel-btn" id="vfxClose">Close</button></div>
+  </div></div>
+
+  <!-- ★ TEXT TO SPEECH MODAL -->
+  <div class="modal-overlay" id="ttsModal"><div class="modal">
+    <h2>🗣️ Text to Speech</h2>
+    <div class="modal-sub">Type anything and turn it into a sound pad using your device's built-in voices.</div>
+    <div class="modal-field"><label>Text</label><input type="text" id="ttsText" placeholder="Type something..." maxlength="300"></div>
+    <div class="modal-field"><label>Voice</label><select id="ttsVoice"></select></div>
+    <div class="kv">
+      <div class="modal-field"><label>Rate <span id="ttsRateVal">1.0x</span></label><input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1"></div>
+      <div class="modal-field"><label>Pitch <span id="ttsPitchVal">1.0</span></label><input type="range" id="ttsPitch" min="0" max="2" step="0.1" value="1"></div>
+    </div>
+    <div class="kv"><div class="modal-field"><label>Bank</label><select id="ttsBank"></select></div><div class="modal-field"><label>Name</label><input type="text" id="ttsName" placeholder="Pad name"></div></div>
+    <div class="modal-actions"><button class="alt-btn" id="ttsPreview">▶ Preview</button><button class="save-btn" id="ttsSave">💾 Save as Pad</button></div>
+    <div class="modal-actions" style="margin-top:8px"><button class="cancel-btn" id="ttsClose">Close</button></div>
   </div></div>
 
   <!-- Edit Modal -->
@@ -282,6 +307,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="kv"><div class="modal-field"><label>Bank</label><select id="editBank"></select></div><div class="modal-field"><label>Category</label><select id="editCategory"><option value="All">All</option><option value="Effects">Effects</option><option value="Music">Music</option><option value="Voice">Voice</option><option value="Funny">Funny</option><option value="Alerts">Alerts</option></select></div></div>
     <div class="modal-field"><label>Volume</label><div class="volume-row"><span>🔈</span><input type="range" id="editVolume" min="0" max="100" value="80"><span>🔊</span></div></div>
     <div class="modal-field"><label>Loop by default</label><select id="editLoopDefault"><option value="0">Off</option><option value="1">On</option></select></div>
+    <div class="kv" style="align-items:flex-end">
+      <div class="modal-field"><label>Hotkey (1 key)</label><input type="text" id="editHotkey" maxlength="1" placeholder="e.g. Q"></div>
+      <div class="modal-field" style="flex:0 0 auto"><label>Favorite</label><button class="icon-btn" id="editFavToggle" title="Favorite" type="button">⭐</button></div>
+    </div>
+    <div class="modal-sub" id="editStats" style="margin-bottom:0">—</div>
     <!-- ★ QUICK TRIM -->
     <div class="trim-section" id="trimSection">
       <div class="trim-header" id="trimToggle"><span class="trim-header-title">✂️ Quick Trim</span><span class="trim-header-arrow" id="trimArrow">▾</span></div>
@@ -293,16 +323,24 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
         <div class="trim-actions"><button class="trim-btn-preview" id="trimPreviewBtn">▶ Preview</button><button class="trim-btn-save" id="trimSaveBtn">💾 Save Trimmed Copy</button></div>
       </div>
     </div>
+    <!-- ★ EFFECTS -->
+    <div class="trim-section" id="fxSection">
+      <div class="trim-header"><span class="trim-header-title">✨ Effects (save as new pad)</span></div>
+      <div class="trim-body open" style="padding:0 16px 16px">
+        <div class="chop-controls"><button class="chop-btn" id="fxReverseBtn">◀ Reverse Copy</button><button class="chop-btn" id="fxEchoBtn">〰 Echo Copy</button></div>
+      </div>
+    </div>
     <div class="modal-actions"><button class="danger-btn" id="editDelete">Delete</button><button class="alt-btn" id="editDownload">⬇ WAV</button><button class="save-btn" id="editSave">Save</button></div>
     <div class="modal-actions" style="margin-top:8px"><button class="cancel-btn" id="editClose">Cancel</button></div>
   </div></div>
 
   <!-- Voice Help -->
-  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div><div class="help-section"><div class="help-section-title">Keyboard</div><span class="cmd">1–9, 0</span> play pad by number &nbsp; <span class="cmd">Esc</span> stop all / close</div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
+  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div><div class="help-section"><div class="help-section-title">Keyboard</div><span class="cmd">1–9, 0</span> play pad by number &nbsp; <span class="cmd">Esc</span> stop all / close &nbsp; any pad can also have its own custom key, set in Edit → Hotkey</div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
 
   <!-- Settings -->
   <div class="modal-overlay" id="settingsModal"><div class="modal"><h2>Settings</h2><div class="settings-grid">
     <div class="settings-row" id="voiceFxSettingsBtn"><span class="settings-row-icon">🎭</span><div class="settings-row-info"><div class="settings-row-title">Voice Changer</div><div class="settings-row-desc">Record or transform a sound with pitch FX</div></div><span class="settings-row-arrow">›</span></div>
+    <div class="settings-row" id="ttsSettingsBtn"><span class="settings-row-icon">🗣️</span><div class="settings-row-info"><div class="settings-row-title">Text to Speech</div><div class="settings-row-desc">Type text, pick a voice, save it as a pad</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="manageBanksBtn"><span class="settings-row-icon">📂</span><div class="settings-row-info"><div class="settings-row-title">Manage Banks</div><div class="settings-row-desc">Create, rename, delete</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="exportBtn"><span class="settings-row-icon">📤</span><div class="settings-row-info"><div class="settings-row-title">Export</div><div class="settings-row-desc">Download .sounddeck backup</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="importBtn"><span class="settings-row-icon">📥</span><div class="settings-row-info"><div class="settings-row-title">Import</div><div class="settings-row-desc">Restore from backup</div></div><span class="settings-row-arrow">›</span></div>
@@ -327,7 +365,7 @@ const CONFIG=Object.freeze({DB_NAME:'SoundDeckDB',DB_VERSION:2,STORE_META:'metad
   PAD_COLORS:[{name:'red',swatch:'#ff3d71'},{name:'green',swatch:'#00e5a0'},{name:'purple',swatch:'#7b61ff'},{name:'orange',swatch:'#ffaa00'},{name:'blue',swatch:'#3d9eff'},{name:'pink',swatch:'#ff61a6'},{name:'teal',swatch:'#00d4c8'},{name:'yellow',swatch:'#ffe144'}],
   DEFAULT_ICONS:['🔊','📯','🎵','🥁','👏','💥','😂','🔔','🎤','🎸','🎹','🐱','🐶','💀','🚨','🎉'],
   WORD_NUMBERS:{'one':1,'won':1,'two':2,'too':2,'to':2,'three':3,'free':3,'tree':3,'four':4,'for':4,'five':5,'six':6,'seven':7,'eight':8,'ate':8,'nine':9,'ten':10,'eleven':11,'twelve':12}});
-const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null};
+const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false};
 
 // ═══ STORAGE ═══
 const Storage=(()=>{let db=null;
@@ -350,9 +388,22 @@ const AudioEngine=(()=>{let ctx=null;
   function getContext(){if(!ctx||ctx.state==='closed')ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx}
   async function decode(id,blob){try{const buf=await getContext().decodeAudioData(await blob.arrayBuffer());AppState.decodedBuffers.set(id,buf);WaveThumb.generate(id,buf);return buf}catch(e){return null}}
   async function getBuffer(id){if(AppState.decodedBuffers.has(id))return AppState.decodedBuffers.get(id);const b=await Storage.loadAudio(id);return b?decode(id,b):null}
-  async function play(id,vol=.8,loop=false){if(AppState.playing.size>=CONFIG.MAX_CONCURRENT||AppState.playing.has(id))return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(c.destination);src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});return true}
-  function stop(id){const e=AppState.playing.get(id);if(e){try{e.source.stop()}catch(x){}AppState.playing.delete(id)}}
-  function stopAll(){for(const[,e]of AppState.playing)try{e.source.stop()}catch(x){};AppState.playing.clear()}
+  function bumpPlayCount(s){if(!s)return;s.playCount=(s.playCount||0)+1;Storage.saveMeta(s)}
+  function playTTS(id,s,vol,loop){
+    if(!('speechSynthesis' in window)){UI.showToast('Speech not supported on this device');return false}
+    const u=new SpeechSynthesisUtterance(s.tts.text);
+    const v=speechSynthesis.getVoices().find(v=>v.voiceURI===s.tts.voiceURI);
+    if(v)u.voice=v;
+    u.rate=s.tts.rate||1;u.pitch=s.tts.pitch||1;u.volume=vol;
+    u.onend=()=>{if(loop&&AppState.playing.has(id))speechSynthesis.speak(u);else{AppState.playing.delete(id);UI.renderGrid()}};
+    u.onerror=()=>{AppState.playing.delete(id);UI.renderGrid()};
+    AppState.playing.set(id,{tts:true,utterance:u});
+    speechSynthesis.speak(u);bumpPlayCount(s);
+    return true;
+  }
+  async function play(id,vol=.8,loop=false){if(AppState.playing.has(id))return false;const s=AppState.sounds.find(x=>x.id===id);if(s&&s.tts)return playTTS(id,s,vol,loop);if(AppState.playing.size>=CONFIG.MAX_CONCURRENT)return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(c.destination);src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});bumpPlayCount(s);return true}
+  function stop(id){const e=AppState.playing.get(id);if(!e)return;if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}AppState.playing.delete(id)}
+  function stopAll(){for(const[,e]of AppState.playing){if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}}AppState.playing.clear()}
   function isPlaying(id){return AppState.playing.has(id)}
   function evictBuffer(id){AppState.decodedBuffers.delete(id)}
   // Play a raw buffer (for preview)
@@ -747,9 +798,12 @@ const VoiceFX=(()=>{
 
   function newSource(){AudioEngine.stopPreview();buffer=null;processed=null;document.getElementById('vfxEditor').style.display='none';document.getElementById('vfxSourcePicker').style.display='';renderLibraryPicker()}
 
+  function reverseSource(){if(!buffer)return;buffer=SoundFX.reverseBuffer(buffer);processed=null;drawWaveform();UI.showToast('Reversed')}
+  function echoSource(){if(!buffer)return;buffer=SoundFX.echoBuffer(buffer);processed=null;document.getElementById('vfxDuration').textContent=fmtTime(buffer.duration);drawWaveform();UI.showToast('Echo added')}
+
   function close(){AudioEngine.stopPreview();if(mr&&mr.state==='recording'){try{mr.stop()}catch(e){}}document.getElementById('voiceFxModal').classList.remove('open')}
 
-  return{open,close,record,loadFromLibrary,preview,save,newSource,applyPresetByName,onPitchInput};
+  return{open,close,record,loadFromLibrary,preview,save,newSource,applyPresetByName,onPitchInput,reverseSource,echoSource};
 })();
 
 // ═══ VOICE ENGINE ═══
@@ -804,8 +858,8 @@ const Banks=(()=>{
 // ═══ EXPORT/IMPORT ═══
 const ExportImport=(()=>{const b2b64=b=>new Promise((r,j)=>{const fr=new FileReader();fr.onloadend=()=>r(fr.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(b)});const b642b=(s,t='audio/wav')=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:t})};
   async function exportLib(){const m=document.getElementById('exportModal'),f=document.getElementById('exportFill'),t=document.getElementById('exportText'),ti=document.getElementById('exportTitle'),a=document.getElementById('exportActions');m.classList.add('open');a.style.display='none';ti.textContent='Exporting...';const total=AppState.sounds.length;if(!total){ti.textContent='Empty';t.textContent='';a.style.display='flex';return}const data={version:CONFIG.EXPORT_VERSION,exportDate:new Date().toISOString(),banks:AppState.banks,sounds:[]};for(let i=0;i<total;i++){const s=AppState.sounds[i];t.textContent=`${i+1}/${total}`;f.style.width=`${((i+1)/total)*100}%`;try{const blob=await Storage.loadAudio(s.id);data.sounds.push({...s,audioBase64:blob?await b2b64(blob):null,mimeType:blob?.type})}catch(e){data.sounds.push({...s,audioBase64:null})}if(i%3===0)await new Promise(r=>setTimeout(r,0))}const fb=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(fb),dl=document.createElement('a');dl.href=url;dl.download=`sounddeck-${new Date().toISOString().split('T')[0]}.sounddeck`;document.body.appendChild(dl);dl.click();document.body.removeChild(dl);URL.revokeObjectURL(url);ti.textContent='Done';t.textContent=`${total} sounds (${(fb.size/1048576).toFixed(1)}MB)`;f.style.width='100%';a.style.display='flex'}
-  async function importFile(file){const preview=document.getElementById('importPreview'),pt=document.getElementById('importProgressTrack'),px=document.getElementById('importText'),actions=document.getElementById('importActions'),cba=document.getElementById('importCheckboxArea');pt.style.display='none';px.style.display='none';actions.style.display='flex';document.getElementById('importConfirm').style.display='';cba.style.display='';try{const data=JSON.parse(await file.text());if(!data.sounds?.length){UI.showToast('No sounds');return}const existing=new Set(AppState.sounds.map(s=>s.name.toLowerCase()));const withA=data.sounds.filter(s=>s.audioBase64),dupes=withA.filter(s=>existing.has(s.name.toLowerCase())),unique=withA.filter(s=>!existing.has(s.name.toLowerCase()));preview.innerHTML=`<div class="import-stat"><span class="import-stat-label">Sounds</span><span class="import-stat-value">${data.sounds.length}</span></div><div class="import-stat"><span class="import-stat-label">New</span><span class="import-stat-value good">${unique.length}</span></div>${dupes.length?`<div class="import-stat"><span class="import-stat-label">Duplicates</span><span class="import-stat-value warning">${dupes.length}</span></div>`:''}`;cba.style.display=dupes.length?'':'none';if(!unique.length&&!dupes.length){document.getElementById('importConfirm').style.display='none';preview.innerHTML+='<div style="text-align:center;margin-top:16px;color:var(--accent4)">Nothing new.</div>'}window._iData={unique,dupes,data};document.getElementById('importPreviewModal').classList.add('open')}catch(e){UI.showToast('Invalid file')}}
-  async function confirmImport(){if(!window._iData)return;const{unique,dupes,data}=window._iData;const replace=document.getElementById('importReplace')?.checked;const list=replace?[...unique,...dupes]:unique;if(!list.length)return;const f=document.getElementById('importFill'),t=document.getElementById('importText'),pt=document.getElementById('importProgressTrack'),a=document.getElementById('importActions');pt.style.display='';t.style.display='';a.style.display='none';document.getElementById('importCheckboxArea').style.display='none';if(data.banks)for(const b of data.banks)if(!AppState.banks.includes(b)){AppState.banks.push(b);await Storage.saveBank(b)}let ct=0;for(let i=0;i<list.length;i++){const s=list[i];t.textContent=`${i+1}/${list.length}`;f.style.width=`${((i+1)/list.length)*100}%`;try{const blob=b642b(s.audioBase64,s.mimeType||'audio/wav');const eI=AppState.sounds.findIndex(x=>x.name.toLowerCase()===s.name.toLowerCase());if(replace&&eI!==-1){const ex=AppState.sounds[eI];await Storage.deleteAudio(ex.id);await Storage.saveAudio(ex.id,blob);AudioEngine.evictBuffer(ex.id);AudioEngine.decode(ex.id,blob);Object.assign(AppState.sounds[eI],{icon:s.icon,category:s.category,color:s.color,volume:s.volume,bank:s.bank||'Main'});await Storage.saveMeta(AppState.sounds[eI])}else{const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;const meta={id,name:s.name,icon:s.icon||'🔊',category:s.category||'All',color:s.color||'purple',volume:s.volume||80,bank:s.bank||'Main',order:AppState.sounds.length,loopDefault:s.loopDefault||false};await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);AppState.sounds.push(meta);AudioEngine.decode(id,blob)}ct++}catch(e){}if(i%3===0)await new Promise(r=>setTimeout(r,0))}UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.showToast(`Imported ${ct}`);t.textContent='Done';f.style.width='100%';a.style.display='flex';document.getElementById('importConfirm').style.display='none';window._iData=null}
+  async function importFile(file){const preview=document.getElementById('importPreview'),pt=document.getElementById('importProgressTrack'),px=document.getElementById('importText'),actions=document.getElementById('importActions'),cba=document.getElementById('importCheckboxArea');pt.style.display='none';px.style.display='none';actions.style.display='flex';document.getElementById('importConfirm').style.display='';cba.style.display='';try{const data=JSON.parse(await file.text());if(!data.sounds?.length){UI.showToast('No sounds');return}const existing=new Set(AppState.sounds.map(s=>s.name.toLowerCase()));const withA=data.sounds.filter(s=>s.audioBase64||s.tts),dupes=withA.filter(s=>existing.has(s.name.toLowerCase())),unique=withA.filter(s=>!existing.has(s.name.toLowerCase()));preview.innerHTML=`<div class="import-stat"><span class="import-stat-label">Sounds</span><span class="import-stat-value">${data.sounds.length}</span></div><div class="import-stat"><span class="import-stat-label">New</span><span class="import-stat-value good">${unique.length}</span></div>${dupes.length?`<div class="import-stat"><span class="import-stat-label">Duplicates</span><span class="import-stat-value warning">${dupes.length}</span></div>`:''}`;cba.style.display=dupes.length?'':'none';if(!unique.length&&!dupes.length){document.getElementById('importConfirm').style.display='none';preview.innerHTML+='<div style="text-align:center;margin-top:16px;color:var(--accent4)">Nothing new.</div>'}window._iData={unique,dupes,data};document.getElementById('importPreviewModal').classList.add('open')}catch(e){UI.showToast('Invalid file')}}
+  async function confirmImport(){if(!window._iData)return;const{unique,dupes,data}=window._iData;const replace=document.getElementById('importReplace')?.checked;const list=replace?[...unique,...dupes]:unique;if(!list.length)return;const f=document.getElementById('importFill'),t=document.getElementById('importText'),pt=document.getElementById('importProgressTrack'),a=document.getElementById('importActions');pt.style.display='';t.style.display='';a.style.display='none';document.getElementById('importCheckboxArea').style.display='none';if(data.banks)for(const b of data.banks)if(!AppState.banks.includes(b)){AppState.banks.push(b);await Storage.saveBank(b)}let ct=0;for(let i=0;i<list.length;i++){const s=list[i];t.textContent=`${i+1}/${list.length}`;f.style.width=`${((i+1)/list.length)*100}%`;try{const isTTS=!!s.tts;const extra={hotkey:s.hotkey||'',favorite:!!s.favorite,playCount:s.playCount||0,...(isTTS?{tts:s.tts}:{})};const eI=AppState.sounds.findIndex(x=>x.name.toLowerCase()===s.name.toLowerCase());if(replace&&eI!==-1){const ex=AppState.sounds[eI];if(!isTTS){const blob=b642b(s.audioBase64,s.mimeType||'audio/wav');await Storage.deleteAudio(ex.id);await Storage.saveAudio(ex.id,blob);AudioEngine.evictBuffer(ex.id);WaveThumb.remove(ex.id);AudioEngine.decode(ex.id,blob)}Object.assign(AppState.sounds[eI],{icon:s.icon,category:s.category,color:s.color,volume:s.volume,bank:s.bank||'Main',...extra});await Storage.saveMeta(AppState.sounds[eI])}else{const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;const meta={id,name:s.name,icon:s.icon||'🔊',category:s.category||'All',color:s.color||'purple',volume:s.volume||80,bank:s.bank||'Main',order:AppState.sounds.length,loopDefault:s.loopDefault||false,...extra};await Storage.saveMeta(meta);AppState.sounds.push(meta);if(!isTTS){const blob=b642b(s.audioBase64,s.mimeType||'audio/wav');await Storage.saveAudio(id,blob);AudioEngine.decode(id,blob)}}ct++}catch(e){}if(i%3===0)await new Promise(r=>setTimeout(r,0))}UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.showToast(`Imported ${ct}`);t.textContent='Done';f.style.width='100%';a.style.display='flex';document.getElementById('importConfirm').style.display='none';window._iData=null}
   return{exportLib,importFile,confirmImport};
 })();
 
@@ -979,19 +1033,101 @@ const QuickTrim=(()=>{
   return{init,updateLabels,clampSliders,preview,saveTrimmedCopy,cleanup};
 })();
 
+// ═══ ★ SOUND FX (reverse / echo) ═══
+const SoundFX=(()=>{
+  function reverseBuffer(buf){
+    const ctx=AudioEngine.getContext(),out=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){const src=buf.getChannelData(c),dst=out.getChannelData(c);for(let i=0;i<src.length;i++)dst[i]=src[src.length-1-i]}
+    return out;
+  }
+  function echoBuffer(buf,delayMs=220,decay=.45,repeats=3){
+    const ctx=AudioEngine.getContext(),delaySamples=Math.round(buf.sampleRate*delayMs/1000),extra=delaySamples*repeats;
+    const out=ctx.createBuffer(buf.numberOfChannels,buf.length+extra,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){
+      const src=buf.getChannelData(c),dst=out.getChannelData(c);dst.set(src,0);
+      for(let r=1;r<=repeats;r++){const g=Math.pow(decay,r),offset=delaySamples*r;for(let i=0;i<src.length;i++){const idx=offset+i;if(idx<dst.length)dst[idx]+=src[i]*g}}
+    }
+    return out;
+  }
+  async function applyAndSave(id,kind){
+    const srcBuf=await AudioEngine.getBuffer(id);
+    if(!srcBuf){UI.showToast('No audio to process');return}
+    const s=AppState.sounds.find(x=>x.id===id);
+    if(!s)return;
+    let out=kind==='reverse'?reverseBuffer(srcBuf):echoBuffer(srcBuf);
+    out=AudioProcessing.normalize(out);
+    const blob=AudioProcessing.encodeWAV(out);
+    const id2=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+    const order=AppState.sounds.filter(x=>(x.bank||'Main')===(s.bank||'Main')).length;
+    const meta={id:id2,name:`${s.name} (${kind==='reverse'?'reversed':'echo'})`,icon:s.icon,category:s.category,color:s.color,volume:s.volume||80,bank:s.bank||'Main',order,loopDefault:false};
+    await Storage.saveMeta(meta);await Storage.saveAudio(id2,blob);await AudioEngine.decode(id2,blob);
+    AppState.sounds.push(meta);UI.renderBanks();UI.renderCategories();UI.renderGrid();
+    UI.showToast(`Saved "${meta.name}"`);
+  }
+  return{reverseBuffer,echoBuffer,applyAndSave};
+})();
+
+// ═══ ★ TEXT TO SPEECH ═══
+const TTS=(()=>{
+  function populateVoices(){
+    const sel=document.getElementById('ttsVoice');
+    const voices=('speechSynthesis' in window)?speechSynthesis.getVoices():[];
+    if(!voices.length){sel.innerHTML='<option value="">Loading voices…</option>';return}
+    const cur=sel.value;
+    sel.innerHTML=voices.map(v=>`<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`).join('');
+    if(cur&&voices.some(v=>v.voiceURI===cur))sel.value=cur;
+  }
+  function open(){
+    if(!('speechSynthesis' in window)){UI.showToast('Speech synthesis not supported on this device');return}
+    document.getElementById('ttsText').value='';
+    document.getElementById('ttsRate').value=1;document.getElementById('ttsRateVal').textContent='1.0x';
+    document.getElementById('ttsPitch').value=1;document.getElementById('ttsPitchVal').textContent='1.0';
+    document.getElementById('ttsName').value='';
+    UI.updateBankSelects();populateVoices();
+    document.getElementById('ttsModal').classList.add('open');
+  }
+  function buildUtterance(){
+    const text=document.getElementById('ttsText').value.trim();
+    if(!text){UI.showToast('Type something first');return null}
+    const u=new SpeechSynthesisUtterance(text);
+    const v=speechSynthesis.getVoices().find(v=>v.voiceURI===document.getElementById('ttsVoice').value);
+    if(v)u.voice=v;
+    u.rate=parseFloat(document.getElementById('ttsRate').value);
+    u.pitch=parseFloat(document.getElementById('ttsPitch').value);
+    return u;
+  }
+  function preview(){const u=buildUtterance();if(!u)return;speechSynthesis.cancel();speechSynthesis.speak(u)}
+  async function save(){
+    const text=document.getElementById('ttsText').value.trim();
+    if(!text){UI.showToast('Type something first');return}
+    const bank=document.getElementById('ttsBank').value||AppState.activeBank;
+    const name=document.getElementById('ttsName').value.trim()||text.slice(0,24);
+    const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+    const order=AppState.sounds.filter(s=>(s.bank||'Main')===bank).length;
+    const meta={id,name,icon:'🗣️',category:'Voice',color:CONFIG.PAD_COLORS[Math.floor(Math.random()*CONFIG.PAD_COLORS.length)].name,volume:80,bank,order,loopDefault:false,
+      tts:{text,voiceURI:document.getElementById('ttsVoice').value,rate:parseFloat(document.getElementById('ttsRate').value),pitch:parseFloat(document.getElementById('ttsPitch').value)}};
+    await Storage.saveMeta(meta);
+    AppState.sounds.push(meta);
+    UI.renderBanks();UI.renderCategories();UI.renderGrid();
+    UI.showToast(`Saved "${name}"`);
+    document.getElementById('ttsModal').classList.remove('open');
+  }
+  return{open,preview,save,populateVoices};
+})();
+
 // ═══ UI ═══
 const UI={
   getSoundsForBank(){return AppState.sounds.filter(s=>(s.bank||'Main')===AppState.activeBank).sort((a,b)=>(a.order??0)-(b.order??0))},
-  getFilteredSounds(){let l=this.getSoundsForBank();if(AppState.activeCategory!=='All')l=l.filter(s=>s.category===AppState.activeCategory);if(AppState.searchQuery){const q=AppState.searchQuery.toLowerCase();l=l.filter(s=>s.name.toLowerCase().includes(q))}return l},
+  getFilteredSounds(){let l=this.getSoundsForBank();if(AppState.activeCategory!=='All')l=l.filter(s=>s.category===AppState.activeCategory);if(AppState.favoritesOnly)l=l.filter(s=>s.favorite);if(AppState.searchQuery){const q=AppState.searchQuery.toLowerCase();l=l.filter(s=>s.name.toLowerCase().includes(q))}return l},
   renderBanks(){document.getElementById('bankBar').innerHTML=AppState.banks.map(b=>`<button class="bank-tab ${b===AppState.activeBank?'active':''}" data-bank="${b}">${b}<span class="bank-count">${AppState.sounds.filter(s=>(s.bank||'Main')===b).length}</span></button>`).join('')+'<button class="bank-add-btn" id="bankAddQuick">+</button>'},
   renderCategories(){const cats=new Set(['All']);this.getSoundsForBank().forEach(s=>cats.add(s.category));document.getElementById('categories').innerHTML=[...cats].map(c=>`<button class="cat-chip ${c===AppState.activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join('')},
-  renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}">${WaveThumb.get(s.id)?`<img class="pad-wave" src="${WaveThumb.get(s.id)}" alt="">`:''}<span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span><span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
+  renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}">${WaveThumb.get(s.id)?`<img class="pad-wave" src="${WaveThumb.get(s.id)}" alt="">`:''}<span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span>${(s.favorite&&!AppState.editMode)?'<span class="pad-fav">⭐</span>':''}<span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}${s.hotkey?`<span class="pad-hotkey">${s.hotkey.toUpperCase()}</span>`:''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
   initSortable(){this.destroySortable();AppState.sortableInstance=new Sortable(document.getElementById('soundGrid'),{animation:200,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',delay:100,delayOnTouchOnly:true,onEnd:async evt=>{if(evt.oldIndex===evt.newIndex)return;const pads=[...document.getElementById('soundGrid').querySelectorAll('.sound-pad')];for(let i=0;i<pads.length;i++){const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);if(s){s.order=i;await Storage.saveMeta(s)}}AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));this.renderGrid()}})},
   destroySortable(){if(AppState.sortableInstance){AppState.sortableInstance.destroy();AppState.sortableInstance=null}},
-  updateBankSelects(){['uploadBank','editBank','chopBank','vfxBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
+  updateBankSelects(){['uploadBank','editBank','chopBank','vfxBank','ttsBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
   setupColorSelect(){document.getElementById('editColor').innerHTML=CONFIG.PAD_COLORS.map(c=>`<option value="${c.name}">${c.name[0].toUpperCase()+c.name.slice(1)}</option>`).join('')},
-  async openEditModal(id){const s=AppState.sounds.find(x=>x.id===id);if(!s)return;AppState.editingSoundId=id;document.getElementById('editName').value=s.name;document.getElementById('editIcon').value=s.icon;document.getElementById('editColor').value=s.color;document.getElementById('editVolume').value=s.volume||80;document.getElementById('editLoopDefault').value=s.loopDefault?'1':'0';this.updateBankSelects();document.getElementById('editBank').value=s.bank||'Main';const cs=document.getElementById('editCategory');if(![...cs.options].some(o=>o.value===s.category))cs.add(new Option(s.category,s.category));cs.value=s.category;document.getElementById('editModal').classList.add('open');await QuickTrim.init(id)},
-  async saveEdit(){const id=AppState.editingSoundId;if(!id)return;const idx=AppState.sounds.findIndex(s=>s.id===id);if(idx===-1)return;Object.assign(AppState.sounds[idx],{name:document.getElementById('editName').value.trim()||'Untitled',icon:document.getElementById('editIcon').value.trim()||'🔊',color:document.getElementById('editColor').value,volume:parseInt(document.getElementById('editVolume').value),bank:document.getElementById('editBank').value,category:document.getElementById('editCategory').value,loopDefault:document.getElementById('editLoopDefault').value==='1'});await Storage.saveMeta(AppState.sounds[idx]);document.getElementById('editModal').classList.remove('open');AppState.editingSoundId=null;this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Updated')},
+  async openEditModal(id){const s=AppState.sounds.find(x=>x.id===id);if(!s)return;AppState.editingSoundId=id;document.getElementById('editName').value=s.name;document.getElementById('editIcon').value=s.icon;document.getElementById('editColor').value=s.color;document.getElementById('editVolume').value=s.volume||80;document.getElementById('editLoopDefault').value=s.loopDefault?'1':'0';document.getElementById('editHotkey').value=s.hotkey||'';document.getElementById('editFavToggle').classList.toggle('active',!!s.favorite);const pc=s.playCount||0;document.getElementById('editStats').textContent=`▶ Played ${pc} time${pc===1?'':'s'}`;this.updateBankSelects();document.getElementById('editBank').value=s.bank||'Main';const cs=document.getElementById('editCategory');if(![...cs.options].some(o=>o.value===s.category))cs.add(new Option(s.category,s.category));cs.value=s.category;document.getElementById('editModal').classList.add('open');await QuickTrim.init(id)},
+  async saveEdit(){const id=AppState.editingSoundId;if(!id)return;const idx=AppState.sounds.findIndex(s=>s.id===id);if(idx===-1)return;const hotkey=document.getElementById('editHotkey').value.trim().slice(0,1);if(hotkey){const clash=AppState.sounds.find(x=>x.id!==id&&(x.bank||'Main')===(document.getElementById('editBank').value)&&x.hotkey&&x.hotkey.toLowerCase()===hotkey.toLowerCase());if(clash)this.showToast(`Note: "${clash.name}" already uses that hotkey`)}Object.assign(AppState.sounds[idx],{name:document.getElementById('editName').value.trim()||'Untitled',icon:document.getElementById('editIcon').value.trim()||'🔊',color:document.getElementById('editColor').value,volume:parseInt(document.getElementById('editVolume').value),bank:document.getElementById('editBank').value,category:document.getElementById('editCategory').value,loopDefault:document.getElementById('editLoopDefault').value==='1',hotkey,favorite:document.getElementById('editFavToggle').classList.contains('active')});await Storage.saveMeta(AppState.sounds[idx]);document.getElementById('editModal').classList.remove('open');AppState.editingSoundId=null;this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Updated')},
   async deleteSound(id){const s=AppState.sounds.find(x=>x.id===id);if(!s||!confirm(`Delete "${s.name}"?`))return;AudioEngine.stop(id);AudioEngine.evictBuffer(id);WaveThumb.remove(id);await Storage.deleteMeta(id);await Storage.deleteAudio(id);AppState.sounds=AppState.sounds.filter(x=>x.id!==id);this.renderBanks();this.renderCategories();this.renderGrid();this.showToast('Deleted')},
   async downloadWAV(id){const blob=await Storage.loadAudio(id);if(!blob)return;const s=AppState.sounds.find(x=>x.id===id);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${s?.name||'sound'}.wav`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)},
   showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2000)},
@@ -1008,6 +1144,7 @@ function setupEvents(){
   document.getElementById('voiceToggle').addEventListener('click',()=>VoiceEngine.toggle());
   document.getElementById('editToggle').addEventListener('click',()=>{AppState.editMode=!AppState.editMode;document.getElementById('editToggle').classList.toggle('active',AppState.editMode);UI.renderGrid()});
   document.getElementById('loopToggle').addEventListener('click',()=>{AppState.loopMode=!AppState.loopMode;document.getElementById('loopToggle').classList.toggle('active',AppState.loopMode);UI.showToast(AppState.loopMode?'Loop ON':'Loop OFF');UI.renderGrid()});
+  document.getElementById('favToggle').addEventListener('click',()=>{AppState.favoritesOnly=!AppState.favoritesOnly;document.getElementById('favToggle').classList.toggle('active',AppState.favoritesOnly);UI.showToast(AppState.favoritesOnly?'Showing favorites':'Showing all');UI.renderGrid()});
   document.getElementById('searchInput').addEventListener('input',e=>{AppState.searchQuery=e.target.value;UI.renderGrid()});
   document.getElementById('recordBtn').addEventListener('click',()=>Recorder.toggle());
   document.getElementById('uploadBtn').addEventListener('click',()=>UploadEngine.open());
@@ -1046,22 +1183,43 @@ function setupEvents(){
   document.getElementById('vfxSave').addEventListener('click',()=>VoiceFX.save());
   document.getElementById('vfxNewSource').addEventListener('click',()=>VoiceFX.newSource());
   document.getElementById('vfxEditor').addEventListener('click',e=>{const b=e.target.closest('.vfx-preset-btn');if(b)VoiceFX.applyPresetByName(b.dataset.group,b.dataset.name)});
+  document.getElementById('vfxReverse').addEventListener('click',()=>VoiceFX.reverseSource());
+  document.getElementById('vfxEcho').addEventListener('click',()=>VoiceFX.echoSource());
 
-  // ★ Keyboard shortcuts: 1-9,0 play pad by number; Esc stops all / closes a modal
+  // ★ Text to Speech
+  document.getElementById('ttsSettingsBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');TTS.open()});
+  document.getElementById('ttsClose').addEventListener('click',()=>document.getElementById('ttsModal').classList.remove('open'));
+  document.getElementById('ttsModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('ttsModal').classList.remove('open')});
+  document.getElementById('ttsRate').addEventListener('input',e=>document.getElementById('ttsRateVal').textContent=parseFloat(e.target.value).toFixed(1)+'x');
+  document.getElementById('ttsPitch').addEventListener('input',e=>document.getElementById('ttsPitchVal').textContent=parseFloat(e.target.value).toFixed(1));
+  document.getElementById('ttsPreview').addEventListener('click',()=>TTS.preview());
+  document.getElementById('ttsSave').addEventListener('click',()=>TTS.save());
+
+  // ★ Favorite toggle + Reverse/Echo copy in Edit modal
+  document.getElementById('editFavToggle').addEventListener('click',()=>document.getElementById('editFavToggle').classList.toggle('active'));
+  document.getElementById('fxReverseBtn').addEventListener('click',()=>{if(AppState.editingSoundId)SoundFX.applyAndSave(AppState.editingSoundId,'reverse')});
+  document.getElementById('fxEchoBtn').addEventListener('click',()=>{if(AppState.editingSoundId)SoundFX.applyAndSave(AppState.editingSoundId,'echo')});
+
+  // ★ Keyboard shortcuts: custom per-pad hotkeys, 1-9/0 play pad by position, Esc stops all / closes a modal
+  function triggerPad(s){if(AudioEngine.isPlaying(s.id))AudioEngine.stop(s.id);else AudioEngine.play(s.id,(s.volume||80)/100,s.loopDefault||AppState.loopMode);UI.renderGrid()}
   document.addEventListener('keydown',e=>{
     const tag=(document.activeElement&&document.activeElement.tagName)||'';
     if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.metaKey||e.ctrlKey||e.altKey)return;
     const openModal=document.querySelector('.modal-overlay.open');
     if(e.key==='Escape'){if(openModal)openModal.classList.remove('open');else{AudioEngine.stopAll();UI.renderGrid()}return}
     if(openModal)return;
+    if(e.key.length===1){
+      const hk=e.key.toLowerCase();
+      const match=UI.getSoundsForBank().find(s=>s.hotkey&&s.hotkey.toLowerCase()===hk);
+      if(match){e.preventDefault();triggerPad(match);return}
+    }
     let idx=null;
     if(e.key>='1'&&e.key<='9')idx=parseInt(e.key,10)-1;else if(e.key==='0')idx=9;
     if(idx===null)return;
     const s=UI.getFilteredSounds()[idx];
     if(!s)return;
     e.preventDefault();
-    if(AudioEngine.isPlaying(s.id))AudioEngine.stop(s.id);else AudioEngine.play(s.id,(s.volume||80)/100,s.loopDefault||AppState.loopMode);
-    UI.renderGrid();
+    triggerPad(s);
   });
 
   // Edit
@@ -1091,6 +1249,7 @@ async function boot(){
   try{await Storage.open();AppState.sounds=await Storage.loadAllMeta();AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));await Banks.load();
     Promise.all(AppState.sounds.map(async s=>{const b=await Storage.loadAudio(s.id);if(b)await AudioEngine.decode(s.id,b)}));
     UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.setupColorSelect();setupEvents();VoiceEngine.init();Chopper.setupCanvasEvents();
+    if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>TTS.populateVoices();TTS.populateVoices()}
     if(!AppState.sounds.length)await genDemos();
   }catch(e){console.error(e);UI.showToast('Init failed')}}
 async function genDemos(){const d=[{n:'Air Horn',i:'📯',c:'Effects',cl:'red',f:440,t:'square',d:.8},{n:'Ding',i:'🔔',c:'Alerts',cl:'yellow',f:880,t:'sine',d:.5},{n:'Bass Drop',i:'💥',c:'Music',cl:'purple',f:80,t:'sawtooth',d:1},{n:'Laser',i:'⚡',c:'Effects',cl:'blue',f:1200,t:'sawtooth',d:.3},{n:'Sad Trombone',i:'🎺',c:'Funny',cl:'orange',f:300,t:'square',d:1.2},{n:'Cymbal',i:'🥁',c:'Music',cl:'teal',f:5000,t:'triangle',d:.6},{n:'Boing',i:'🏀',c:'Funny',cl:'green',f:600,t:'sine',d:.4},{n:'Alert',i:'🚨',c:'Alerts',cl:'red',f:660,t:'square',d:.7},{n:'Click',i:'👆',c:'Effects',cl:'pink',f:2000,t:'sine',d:.05}];for(const x of d){const blob=AudioEngine.generateTone(x.f,x.t,x.d);const id=crypto.randomUUID?.()??Date.now().toString();const meta={id,name:x.n,icon:x.i,category:x.c,color:x.cl,volume:80,bank:'Main',order:AppState.sounds.length,loopDefault:false};await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);await AudioEngine.decode(id,blob);AppState.sounds.push(meta)}UI.renderBanks();UI.renderCategories();UI.renderGrid()}
