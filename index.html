@@ -265,7 +265,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <button class="mode-tab" data-mode="songs">🎵 Songs</button>
   </div>
   <div class="bank-bar pads-view-el" id="bankBar"></div>
-  <div class="voice-bar pads-view-el" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
+  <div class="voice-bar" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
   <div class="search-bar pads-view-el" id="searchBar"><input type="text" id="searchInput" placeholder="Search sounds..."></div>
   <div class="categories pads-view-el" id="categories"></div>
   <div class="grid-wrapper pads-view-el" id="gridWrapper"><div class="sound-grid" id="soundGrid"></div></div>
@@ -449,7 +449,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
   </div></div>
 
   <!-- Voice Help -->
-  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div><div class="help-section"><div class="help-section-title">Keyboard</div><span class="cmd">1–9, 0</span> play pad by number &nbsp; <span class="cmd">Esc</span> stop all / close &nbsp; any pad can also have its own custom key, set in Edit → Hotkey</div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
+  <div class="modal-overlay" id="helpModal"><div class="modal"><h2>Voice Commands</h2><div class="help-content"><div class="help-section"><div class="help-section-title">Play</div><span class="cmd">play 1</span> <span class="cmd">play air horn</span></div><div class="help-section"><div class="help-section-title">Stop</div><span class="cmd">stop</span> <span class="cmd">stop all</span></div><div class="help-section"><div class="help-section-title">Loop</div><span class="cmd">loop on</span> <span class="cmd">loop off</span></div><div class="help-section"><div class="help-section-title">Banks</div><span class="cmd">switch to memes</span></div><div class="help-section"><div class="help-section-title">Modes</div><span class="cmd">go to notes</span> <span class="cmd">songs mode</span> <span class="cmd">go to pads</span></div><div class="help-section"><div class="help-section-title">Songs</div><span class="cmd">play song</span> <span class="cmd">stop song</span> <span class="cmd">loop song</span></div><div class="help-section"><div class="help-section-title">Notes</div><span class="cmd">new note</span> <span class="cmd">new voice note</span></div><div class="help-section"><div class="help-section-title">Other</div><span class="cmd">favourites</span> <span class="cmd">add meme pack</span></div><div class="help-section"><div class="help-section-title">Keyboard</div><span class="cmd">1–9, 0</span> play pad by number &nbsp; <span class="cmd">Esc</span> stop all / close &nbsp; any pad can also have its own custom key, set in Edit → Hotkey</div></div><div class="modal-actions"><button class="save-btn" id="helpClose" style="background:var(--surface3)">Got it</button></div></div></div>
 
   <!-- Settings -->
   <div class="modal-overlay" id="settingsModal"><div class="modal"><h2>Settings</h2><div class="settings-grid">
@@ -931,14 +931,39 @@ const VoiceEngine=(()=>{let recognition=null,supported=false,lastP='',pTimeout=n
   function clearST(){clearTimeout(sTimer);clearInterval(tCountdown);document.getElementById('voiceTimeout').textContent=''}
   function updateTD(end){const r=Math.max(0,Math.ceil((end-Date.now())/60000));document.getElementById('voiceTimeout').textContent=r>0&&r<=5?`${r}m`:''}
   function handleResult(ev){const inner=document.getElementById('voiceBarInner'),status=document.getElementById('voiceStatus');let fT='',iT='';for(let i=ev.resultIndex;i<ev.results.length;i++){if(ev.results[i].isFinal)fT+=ev.results[i][0].transcript;else iT+=ev.results[i][0].transcript}if(iT){status.innerHTML=`<span class="heard">${iT}</span>`;inner.classList.add('processing');inner.classList.remove('listening')}if(fT){const t=fT.trim().toLowerCase();if(t!==lastP){lastP=t;resetST();const m=processCmd(t);if(m){status.innerHTML=`<span class="matched">✓ ${m}</span>`;const tt=document.getElementById('toast');tt.textContent='🎙️ '+m;tt.className='toast show voice-match';clearTimeout(window._tt);window._tt=setTimeout(()=>tt.classList.remove('show','voice-match'),1800)}else status.innerHTML=`<span class="heard">"${fT.trim()}"</span>`;clearTimeout(pTimeout);pTimeout=setTimeout(()=>{inner.classList.remove('processing');inner.classList.add('listening');status.innerHTML='Listening...'},2000)}}}
-  function processCmd(tr){const raw=tr.replace(/[^\w\s]/g,'').trim(),words=raw.split(/\s+/),filtered=UI.getFilteredSounds();if(/\b(stop all|stop everything|silence|quiet|shut up|kill)\b/.test(raw)){AudioEngine.stopAll();UI.renderGrid();return'Stopped'}if(/^stop$/.test(raw)){AudioEngine.stopAll();UI.renderGrid();return'Stopped'}if(/\bloop\s*(on|mode)\b/.test(raw)){AppState.loopMode=true;document.getElementById('loopToggle').classList.add('active');UI.renderGrid();return'Loop ON'}if(/\bloop\s*(off)\b/.test(raw)){AppState.loopMode=false;document.getElementById('loopToggle').classList.remove('active');UI.renderGrid();return'Loop OFF'}const bm=raw.match(/\b(?:switch to|bank|go to)\s+(.+)/);if(bm){const f=AppState.banks.find(b=>b.toLowerCase().includes(bm[1].trim()));if(f){AppState.activeBank=f;UI.renderBanks();UI.renderCategories();UI.renderGrid();return`Bank: ${f}`}}const pt=/\b(play|hit|trigger|fire|press|tap)\b/,hasP=pt.test(raw),num=extractNum(raw);if(num&&num>=1&&num<=filtered.length){trigPlay(filtered[num-1]);return`#${num}: ${filtered[num-1].name}`}if(hasP){let after=raw;const m=raw.match(pt);if(m)after=raw.substring(raw.indexOf(m[0])+m[0].length).replace(/\b(the|a|option|number|sound)\b/g,'').trim();if(after.length>1){const nW=extractNum(after);if(nW&&nW>=1&&nW<=filtered.length){trigPlay(filtered[nW-1]);return`#${nW}: ${filtered[nW-1].name}`}const nm=findByName(after,filtered)||findByName(after,AppState.sounds);if(nm){trigPlay(nm);return nm.name}}}return null}
-  function trigPlay(s){if(AudioEngine.isPlaying(s.id))AudioEngine.stop(s.id);else AudioEngine.play(s.id,(s.volume||80)/100,s.loopDefault||AppState.loopMode);UI.renderGrid()}
+  function processCmd(tr){const raw=tr.replace(/[^\w\s]/g,'').trim(),words=raw.split(/\s+/),filtered=UI.getFilteredSounds();if(/\b(stop all|stop everything|silence|quiet|shut up|kill)\b/.test(raw)||/^stop$/.test(raw)){if(AppState.songPlaying)SongBuilder.stop();AudioEngine.stopAll();UI.renderGrid();return'Stopped'}if(/\bloop\s*(on|mode)\b/.test(raw)){AppState.loopMode=true;document.getElementById('loopToggle').classList.add('active');UI.renderGrid();return'Loop ON'}if(/\bloop\s*(off)\b/.test(raw)){AppState.loopMode=false;document.getElementById('loopToggle').classList.remove('active');UI.renderGrid();return'Loop OFF'}
+    // ── Mode switching (checked before bank matching) ──
+    const modeM=raw.match(/\b(?:go to|open|show|switch to)\s+(pad|pads|note|notes|song|songs)\b/)
+              ||raw.match(/\b(pad|pads|note|notes|song|songs)\s+(?:mode|page|tab|view|screen)\b/);
+    if(modeM){const w=modeM[1];const target=/^pad/.test(w)?'pads':/^note/.test(w)?'notes':'songs';
+      switchMode(target);return'Mode: '+target}
+    // ── Song transport ──
+    if(/\b(play|start)\s+(the\s+)?song\b/.test(raw)){if(AppState.mode!=='songs')switchMode('songs');SongBuilder.play();return'Playing song'}
+    if(/\bstop\s+(the\s+)?song\b/.test(raw)){SongBuilder.stop();return'Song stopped'}
+    if(/\bloop\s+(the\s+)?song\b/.test(raw)){SongBuilder.toggleLoop();return'Song loop toggled'}
+    // ── Notes ──
+    if(/\b(new|add|create|take|start)\s+(a\s+)?(voice\s+|audio\s+)?note\b/.test(raw)){
+      const isVoice=/\b(voice|audio|record)\b/.test(raw);
+      if(AppState.mode!=='notes')switchMode('notes');
+      if(isVoice)Notes.toggleRecord();else Notes.openNew('text');
+      return isVoice?'Recording voice note':'New note'}
+    // ── Favourites ──
+    if(/\bfavou?rites?\b/.test(raw)){
+      AppState.favoritesOnly=!AppState.favoritesOnly;
+      document.getElementById('favToggle').classList.toggle('active',AppState.favoritesOnly);
+      if(AppState.mode!=='pads')switchMode('pads');
+      UI.renderGrid();
+      return AppState.favoritesOnly?'Favourites only':'All sounds'}
+    // ── Meme pack ──
+    if(/\b(meme|sound)\s*pack\b/.test(raw)&&/\b(add|load|install|get|build)\b/.test(raw)){MemePack.install();return'Building meme pack'}
+    const bm=raw.match(/\b(?:switch to|bank|go to)\s+(.+)/);if(bm){const q=bm[1].trim();const f=AppState.banks.find(b=>b.toLowerCase().includes(q));if(f){AppState.activeBank=f;AppState.activeCategory='All';if(AppState.mode!=='pads')switchMode('pads');UI.renderBanks();UI.renderCategories();UI.renderGrid();return`Bank: ${f}`}return`No bank "${q}"`}const pt=/\b(play|hit|trigger|fire|press|tap)\b/,hasP=pt.test(raw),num=extractNum(raw),hasDigit=/\d/.test(raw);if(num&&num>=1&&num<=filtered.length&&(hasDigit||hasP)){trigPlay(filtered[num-1]);return`#${num}: ${filtered[num-1].name}`}if(hasP){let after=raw;const m=raw.match(pt);if(m)after=raw.substring(raw.indexOf(m[0])+m[0].length).replace(/\b(the|a|option|number|sound)\b/g,'').trim();if(after.length>1){const nW=extractNum(after);if(nW&&nW>=1&&nW<=filtered.length){trigPlay(filtered[nW-1]);return`#${nW}: ${filtered[nW-1].name}`}const nm=findByName(after,filtered)||findByName(after,AppState.sounds);if(nm){trigPlay(nm);return nm.name}}}return null}
+  function trigPlay(s){if(AppState.mode!=='pads')switchMode('pads');if(AudioEngine.isPlaying(s.id))AudioEngine.stop(s.id);else AudioEngine.play(s.id,(s.volume||80)/100,s.loopDefault||AppState.loopMode);UI.renderGrid()}
   function extractNum(t){const d=t.match(/\b(\d{1,2})\b/);if(d)return parseInt(d[1]);for(const w of t.split(/\s+/))if(CONFIG.WORD_NUMBERS[w])return CONFIG.WORD_NUMBERS[w];return null}
   function levenshtein(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const dp=Array.from({length:m+1},()=>new Array(n+1));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return dp[m][n]}
   function findByName(q,list){q=q.toLowerCase().trim();if(q.length<2)return null;let m=list.find(s=>s.name.toLowerCase()===q);if(m)return m;m=list.find(s=>s.name.toLowerCase().includes(q));if(m)return m;let best=null,bs=0;for(const snd of list){let sc=0;for(const qw of q.split(/\s+/))for(const sw of snd.name.toLowerCase().split(/\s+/)){if(sw.includes(qw)||qw.includes(sw))sc+=2;else{const d=levenshtein(qw,sw);if(Math.max(qw.length,sw.length)>0&&d/Math.max(qw.length,sw.length)<=.35)sc+=1}}if(sc>bs&&sc>=2){bs=sc;best=snd}}return best}
   function pause(){if(supported&&AppState.voiceActive)try{recognition.stop()}catch(e){}}
   function resume(){if(supported&&AppState.voiceActive)setTimeout(()=>{try{recognition.start()}catch(e){}},500)}
-  return{init,toggle,pause,resume};
+  return{init,toggle,pause,resume,processCmd};
 })();
 
 // ═══ RECORDER ═══
