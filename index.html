@@ -7,9 +7,34 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <title>SoundDeck</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<!-- Fonts load non-blocking: if the network is slow/filtered/offline the page still
+     paints immediately with the fallback stack instead of hanging on first paint. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU291bmREZWNrIiwic2hvcnRfbmFtZSI6IlNvdW5kRGVjayIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMGEwYTBmIiwidGhlbWVfY29sb3IiOiIjMGEwYTBmIiwicGVybWlzc2lvbnMiOlsibWljcm9waG9uZSJdfQ==">
+<script>
+/* Deliberately ES5-only and in its own script tag, loaded BEFORE the main app
+   script. If the main script fails to even parse on an older browser, this
+   still runs and puts the reason on screen instead of leaving a dead page. */
+(function(){
+  var shown=false;
+  window.showFatalError=function(err){
+    if(shown)return;shown=true;
+    try{
+      var msg=(err&&(err.message||err.reason&&err.reason.message))||String(err||'Unknown error');
+      var box=document.createElement('div');
+      box.setAttribute('style','position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#2a0d16;color:#ffb3c6;border-top:2px solid #ff3d71;padding:12px 16px;font:12px/1.5 system-ui,sans-serif;max-height:45%;overflow:auto;-webkit-user-select:text;user-select:text');
+      box.innerHTML='<b style="color:#ff3d71">App error</b> — please screenshot this:<br><span style="word-break:break-word"></span>'+
+        '<button style="margin-top:8px;background:#ff3d71;color:#fff;border:0;border-radius:8px;padding:6px 14px;font-size:12px">Dismiss</button>';
+      box.getElementsByTagName('span')[0].textContent=msg;
+      box.getElementsByTagName('button')[0].onclick=function(){box.parentNode.removeChild(box);shown=false};
+      (document.body||document.documentElement).appendChild(box);
+    }catch(e){}
+  };
+  window.addEventListener('error',function(e){window.showFatalError(e.error||e.message)});
+  window.addEventListener('unhandledrejection',function(e){window.showFatalError(e.reason)});
+})();
+</script>
 <style>
 :root{--bg:#0a0a0f;--surface:#14141f;--surface2:#1c1c2e;--surface3:#24243a;--accent:#ff3d71;--accent2:#00e5a0;--accent3:#7b61ff;--accent4:#ffaa00;--text:#eeeef5;--text2:#8888aa;--radius:14px;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -63,7 +88,8 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 @keyframes wiggle{0%{transform:rotate(-1deg)}100%{transform:rotate(1deg)}}
 .delete-badge{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);color:var(--accent);font-size:16px;display:none;align-items:center;justify-content:center;z-index:5;border:1.5px solid var(--accent)}
 .edit-mode .delete-badge{display:flex}
-.sortable-ghost{opacity:.4;transform:scale(.92)}.sortable-chosen{z-index:999}.sortable-drag{opacity:.9;transform:scale(1.06);box-shadow:0 12px 40px rgba(0,0,0,.6);border-radius:var(--radius)}
+.edit-mode .sound-pad{touch-action:none}
+.sound-pad.drag-active{z-index:999;opacity:.92;box-shadow:0 12px 40px rgba(0,0,0,.6);animation:none;transition:none}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:16px}.empty-state .big-icon{font-size:64px;opacity:.4}.empty-state p{color:var(--text2);font-size:15px;line-height:1.5}
 .bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 20px calc(12px + var(--safe-bottom));background:linear-gradient(0deg,var(--bg) 60%,transparent 100%);display:flex;gap:10px;z-index:20}
 .action-btn{flex:1;height:52px;border-radius:14px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
@@ -1122,8 +1148,72 @@ const UI={
   renderBanks(){document.getElementById('bankBar').innerHTML=AppState.banks.map(b=>`<button class="bank-tab ${b===AppState.activeBank?'active':''}" data-bank="${b}">${b}<span class="bank-count">${AppState.sounds.filter(s=>(s.bank||'Main')===b).length}</span></button>`).join('')+'<button class="bank-add-btn" id="bankAddQuick">+</button>'},
   renderCategories(){const cats=new Set(['All']);this.getSoundsForBank().forEach(s=>cats.add(s.category));document.getElementById('categories').innerHTML=[...cats].map(c=>`<button class="cat-chip ${c===AppState.activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join('')},
   renderGrid(){const filtered=this.getFilteredSounds(),grid=document.getElementById('soundGrid'),wrap=document.getElementById('gridWrapper');const ex=wrap.querySelector('.empty-state');if(ex)ex.remove();if(!filtered.length){grid.innerHTML='';const e=document.createElement('div');e.className='empty-state';e.innerHTML='<div class="big-icon">🎧</div><p>No sounds here.<br>Record, upload, or use the chopper.</p>';wrap.appendChild(e);this.destroySortable();return}grid.innerHTML=filtered.map((s,i)=>`<button class="sound-pad pad-${s.color} ${AppState.playing.has(s.id)?'playing':''}" data-id="${s.id}">${WaveThumb.get(s.id)?`<img class="pad-wave" src="${WaveThumb.get(s.id)}" alt="">`:''}<span class="pad-number">#${i+1}</span><span class="delete-badge">✕</span>${(s.favorite&&!AppState.editMode)?'<span class="pad-fav">⭐</span>':''}<span class="pad-icon">${s.icon}</span><span class="pad-label">${s.name}</span>${(s.loopDefault||AppState.loopMode)?'<span class="loop-indicator">LOOP</span>':''}${s.hotkey?`<span class="pad-hotkey">${s.hotkey.toUpperCase()}</span>`:''}</button>`).join('');wrap.classList.toggle('edit-mode',AppState.editMode);if(AppState.editMode)this.initSortable();else this.destroySortable()},
-  initSortable(){this.destroySortable();AppState.sortableInstance=new Sortable(document.getElementById('soundGrid'),{animation:200,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',delay:100,delayOnTouchOnly:true,onEnd:async evt=>{if(evt.oldIndex===evt.newIndex)return;const pads=[...document.getElementById('soundGrid').querySelectorAll('.sound-pad')];for(let i=0;i<pads.length;i++){const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);if(s){s.order=i;await Storage.saveMeta(s)}}AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));this.renderGrid()}})},
-  destroySortable(){if(AppState.sortableInstance){AppState.sortableInstance.destroy();AppState.sortableInstance=null}},
+  // Native drag-reorder (pointer events). Replaces the old CDN Sortable.js
+  // dependency so the app has zero external scripts and works fully offline.
+  initSortable(){
+    this.destroySortable();
+    const grid=document.getElementById('soundGrid');
+    if(!grid)return;
+    let dragEl=null,startX=0,startY=0,holdTimer=null,dragging=false;
+
+    const cleanup=()=>{
+      clearTimeout(holdTimer);
+      if(dragEl){dragEl.classList.remove('drag-active');dragEl.style.transform='';}
+      dragEl=null;dragging=false;
+    };
+
+    const onDown=e=>{
+      if(!AppState.editMode)return;
+      const pad=e.target.closest('.sound-pad');
+      if(!pad||e.target.closest('.delete-badge'))return;
+      startX=e.clientX;startY=e.clientY;
+      holdTimer=setTimeout(()=>{
+        dragEl=pad;dragging=true;
+        pad.classList.add('drag-active');
+        try{grid.setPointerCapture(e.pointerId)}catch(x){}
+      },140);
+    };
+
+    const onMove=e=>{
+      if(!dragging){
+        // Cancel the pending hold if the finger travels before it fires.
+        if(holdTimer&&(Math.abs(e.clientX-startX)>10||Math.abs(e.clientY-startY)>10)){clearTimeout(holdTimer);holdTimer=null}
+        return;
+      }
+      if(!dragEl)return;
+      e.preventDefault();
+      dragEl.style.transform=`translate(${e.clientX-startX}px, ${e.clientY-startY}px) scale(1.06)`;
+      // Find the pad under the finger and swap into its slot.
+      const over=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList&&el.classList.contains('sound-pad')&&el!==dragEl);
+      if(over&&over.parentNode===grid){
+        const pads=[...grid.children];
+        if(pads.indexOf(over)<pads.indexOf(dragEl))grid.insertBefore(dragEl,over);
+        else grid.insertBefore(dragEl,over.nextSibling);
+        startX=e.clientX;startY=e.clientY;
+        dragEl.style.transform='scale(1.06)';
+      }
+    };
+
+    const onUp=async()=>{
+      const wasDragging=dragging;
+      cleanup();
+      if(!wasDragging)return;
+      const pads=[...grid.querySelectorAll('.sound-pad')];
+      for(let i=0;i<pads.length;i++){
+        const s=AppState.sounds.find(x=>x.id===pads[i].dataset.id);
+        if(s){s.order=i;try{await Storage.saveMeta(s)}catch(x){}}
+      }
+      AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));
+      this.renderGrid();
+    };
+
+    grid.addEventListener('pointerdown',onDown);
+    grid.addEventListener('pointermove',onMove);
+    grid.addEventListener('pointerup',onUp);
+    grid.addEventListener('pointercancel',cleanup);
+    AppState.sortableInstance={destroy(){grid.removeEventListener('pointerdown',onDown);grid.removeEventListener('pointermove',onMove);grid.removeEventListener('pointerup',onUp);grid.removeEventListener('pointercancel',cleanup);cleanup()}};
+  },
+  destroySortable(){if(AppState.sortableInstance){try{AppState.sortableInstance.destroy()}catch(x){}AppState.sortableInstance=null}},
   updateBankSelects(){['uploadBank','editBank','chopBank','vfxBank','ttsBank'].forEach(id=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=AppState.banks.map(b=>`<option value="${b}">${b}</option>`).join('');sel.value=AppState.activeBank}})},
   setupColorSelect(){document.getElementById('editColor').innerHTML=CONFIG.PAD_COLORS.map(c=>`<option value="${c.name}">${c.name[0].toUpperCase()+c.name.slice(1)}</option>`).join('')},
   async openEditModal(id){const s=AppState.sounds.find(x=>x.id===id);if(!s)return;AppState.editingSoundId=id;document.getElementById('editName').value=s.name;document.getElementById('editIcon').value=s.icon;document.getElementById('editColor').value=s.color;document.getElementById('editVolume').value=s.volume||80;document.getElementById('editLoopDefault').value=s.loopDefault?'1':'0';document.getElementById('editHotkey').value=s.hotkey||'';document.getElementById('editFavToggle').classList.toggle('active',!!s.favorite);const pc=s.playCount||0;document.getElementById('editStats').textContent=`▶ Played ${pc} time${pc===1?'':'s'}`;this.updateBankSelects();document.getElementById('editBank').value=s.bank||'Main';const cs=document.getElementById('editCategory');if(![...cs.options].some(o=>o.value===s.category))cs.add(new Option(s.category,s.category));cs.value=s.category;document.getElementById('editModal').classList.add('open');await QuickTrim.init(id)},
@@ -1245,13 +1335,30 @@ function setupEvents(){
 }
 
 // ═══ BOOT ═══
+// PHASE 1 wires the entire UI synchronously, before any storage/network work.
+// This is deliberate: if the database is slow, blocked by another tab, or
+// fails outright, the app must still be usable rather than a dead screen.
+// PHASE 2 then loads data and re-renders.
 async function boot(){
-  try{await Storage.open();AppState.sounds=await Storage.loadAllMeta();AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));await Banks.load();
-    Promise.all(AppState.sounds.map(async s=>{const b=await Storage.loadAudio(s.id);if(b)await AudioEngine.decode(s.id,b)}));
-    UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.setupColorSelect();setupEvents();VoiceEngine.init();Chopper.setupCanvasEvents();
+  try{
+    UI.setupColorSelect();setupEvents();VoiceEngine.init();Chopper.setupCanvasEvents();
+    UI.renderBanks();UI.renderCategories();UI.renderGrid();
     if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>TTS.populateVoices();TTS.populateVoices()}
+  }catch(e){console.error('UI init failed',e);showFatalError(e)}
+
+  try{
+    await Storage.open();
+    AppState.sounds=await Storage.loadAllMeta();
+    AppState.sounds.sort((a,b)=>(a.order??0)-(b.order??0));
+    await Banks.load();
+    Promise.all(AppState.sounds.map(async s=>{const b=await Storage.loadAudio(s.id);if(b)await AudioEngine.decode(s.id,b)}));
+    UI.renderBanks();UI.renderCategories();UI.renderGrid();
     if(!AppState.sounds.length)await genDemos();
-  }catch(e){console.error(e);UI.showToast('Init failed')}}
+  }catch(e){
+    console.error('Storage init failed',e);
+    UI.showToast('Storage unavailable — recording still works');
+  }
+}
 async function genDemos(){const d=[{n:'Air Horn',i:'📯',c:'Effects',cl:'red',f:440,t:'square',d:.8},{n:'Ding',i:'🔔',c:'Alerts',cl:'yellow',f:880,t:'sine',d:.5},{n:'Bass Drop',i:'💥',c:'Music',cl:'purple',f:80,t:'sawtooth',d:1},{n:'Laser',i:'⚡',c:'Effects',cl:'blue',f:1200,t:'sawtooth',d:.3},{n:'Sad Trombone',i:'🎺',c:'Funny',cl:'orange',f:300,t:'square',d:1.2},{n:'Cymbal',i:'🥁',c:'Music',cl:'teal',f:5000,t:'triangle',d:.6},{n:'Boing',i:'🏀',c:'Funny',cl:'green',f:600,t:'sine',d:.4},{n:'Alert',i:'🚨',c:'Alerts',cl:'red',f:660,t:'square',d:.7},{n:'Click',i:'👆',c:'Effects',cl:'pink',f:2000,t:'sine',d:.05}];for(const x of d){const blob=AudioEngine.generateTone(x.f,x.t,x.d);const id=crypto.randomUUID?.()??Date.now().toString();const meta={id,name:x.n,icon:x.i,category:x.c,color:x.cl,volume:80,bank:'Main',order:AppState.sounds.length,loopDefault:false};await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);await AudioEngine.decode(id,blob);AppState.sounds.push(meta)}UI.renderBanks();UI.renderCategories();UI.renderGrid()}
 boot();
 </script>
