@@ -235,13 +235,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <button class="mode-tab" data-mode="notes">📝 Notes</button>
     <button class="mode-tab" data-mode="songs">🎵 Songs</button>
   </div>
-  <div id="padsView" style="display:contents">
-    <div class="bank-bar" id="bankBar"></div>
-    <div class="voice-bar" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
-    <div class="search-bar" id="searchBar"><input type="text" id="searchInput" placeholder="Search sounds..."></div>
-    <div class="categories" id="categories"></div>
-    <div class="grid-wrapper" id="gridWrapper"><div class="sound-grid" id="soundGrid"></div></div>
-  </div>
+  <div class="bank-bar pads-view-el" id="bankBar"></div>
+  <div class="voice-bar pads-view-el" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
+  <div class="search-bar pads-view-el" id="searchBar"><input type="text" id="searchInput" placeholder="Search sounds..."></div>
+  <div class="categories pads-view-el" id="categories"></div>
+  <div class="grid-wrapper pads-view-el" id="gridWrapper"><div class="sound-grid" id="soundGrid"></div></div>
 
   <!-- ★ NOTES MODE -->
   <div id="notesView" style="display:none;flex-direction:column;flex:1;min-height:0">
@@ -505,7 +503,7 @@ const AudioEngine=(()=>{let ctx=null;
   let previewSrc=null;
   function previewBuffer(buffer,startTime=0,duration=null){stopPreview();const c=getContext(),src=c.createBufferSource();src.buffer=buffer;src.connect(c.destination);src.start(0,startTime,duration||undefined);previewSrc=src;src.onended=()=>{previewSrc=null}}
   function stopPreview(){if(previewSrc){try{previewSrc.stop()}catch(e){}previewSrc=null}}
-  function generateTone(freq,type,dur){const sr=44100,len=sr*dur,bps=16,br=sr*bps/8,ba=bps/8,ds=len*ba;const ab=new ArrayBuffer(44+ds),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,br,true);v.setUint16(32,ba,true);v.setUint16(34,bps,true);ws(36,'data');v.setUint32(40,ds,true);for(let i=0;i<len;i++){const t=i/sr,env=Math.max(0,1-t/dur),ph=2*Math.PI*freq*t;let s=0;switch(type){case'sine':s=Math.sin(ph);break;case'square':s=Math.sin(ph)>0?.8:-.8;break;case'sawtooth':s=2*((freq*t)%1)-1;break;case'triangle':s=4*Math.abs(((freq*t)%1)-.5)-1;break}v.setInt16(44+i*2,Math.max(-1,Math.min(1,s*env*.5))*0x7FFF,true)}return new Blob([ab],{type:'audio/wav'})}
+  function generateTone(freq,type,dur){const sr=44100,len=Math.floor(sr*dur),bps=16,br=sr*bps/8,ba=bps/8,ds=len*ba;const ab=new ArrayBuffer(44+ds),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,br,true);v.setUint16(32,ba,true);v.setUint16(34,bps,true);ws(36,'data');v.setUint32(40,ds,true);for(let i=0;i<len;i++){const t=i/sr,env=Math.max(0,1-t/dur),ph=2*Math.PI*freq*t;let s=0;switch(type){case'sine':s=Math.sin(ph);break;case'square':s=Math.sin(ph)>0?.8:-.8;break;case'sawtooth':s=2*((freq*t)%1)-1;break;case'triangle':s=4*Math.abs(((freq*t)%1)-.5)-1;break}v.setInt16(44+i*2,Math.max(-1,Math.min(1,s*env*.5))*0x7FFF,true)}return new Blob([ab],{type:'audio/wav'})}
   return{getContext,decode,getBuffer,play,stop,stopAll,isPlaying,evictBuffer,previewBuffer,stopPreview,generateTone};
 })();
 
@@ -1509,7 +1507,7 @@ function switchMode(mode){
   if(mode===AppState.mode)return;
   AppState.mode=mode;
   document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===mode));
-  document.getElementById('padsView').style.display=mode==='pads'?'contents':'none';
+  document.querySelectorAll('.pads-view-el').forEach(el=>{el.style.display=mode==='pads'?'':'none'});
   document.getElementById('bottomBar').style.display=mode==='pads'?'':'none';
   document.getElementById('notesView').style.display=mode==='notes'?'flex':'none';
   document.getElementById('songsView').style.display=mode==='songs'?'block':'none';
