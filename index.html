@@ -455,6 +455,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
   <div class="modal-overlay" id="settingsModal"><div class="modal"><h2>Settings</h2><div class="settings-grid">
     <div class="settings-row" id="voiceFxSettingsBtn"><span class="settings-row-icon">🎭</span><div class="settings-row-info"><div class="settings-row-title">Voice Changer</div><div class="settings-row-desc">Record or transform a sound with pitch FX</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="ttsSettingsBtn"><span class="settings-row-icon">🗣️</span><div class="settings-row-info"><div class="settings-row-title">Text to Speech</div><div class="settings-row-desc">Type text, pick a voice, save it as a pad</div></div><span class="settings-row-arrow">›</span></div>
+    <div class="settings-row" id="memePackBtn"><span class="settings-row-icon">😂</span><div class="settings-row-info"><div class="settings-row-title">Add Meme Pack</div><div class="settings-row-desc">Generate a bank of classic soundboard FX</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="manageBanksBtn"><span class="settings-row-icon">📂</span><div class="settings-row-info"><div class="settings-row-title">Manage Banks</div><div class="settings-row-desc">Create, rename, delete</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="exportBtn"><span class="settings-row-icon">📤</span><div class="settings-row-info"><div class="settings-row-title">Export</div><div class="settings-row-desc">Download .sounddeck backup</div></div><span class="settings-row-arrow">›</span></div>
     <div class="settings-row" id="importBtn"><span class="settings-row-icon">📥</span><div class="settings-row-info"><div class="settings-row-title">Import</div><div class="settings-row-desc">Restore from backup</div></div><span class="settings-row-arrow">›</span></div>
@@ -1464,6 +1465,228 @@ const SongBuilder=(()=>{
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,renderLibrary};
 })();
 
+// ═══ MEME PACK ═══
+// Every sound here is synthesised from scratch (oscillators + noise + filters),
+// so the audio is original and carries no sample-licensing baggage.
+const MemePack=(()=>{
+  const SR=44100;
+
+  // Additive renderer with proper phase accumulation, so frequency sweeps
+  // track the intended pitch instead of drifting.
+  function synth(dur,voices){
+    const n=Math.max(1,Math.floor(SR*dur)),out=new Float32Array(n),ph=voices.map(()=>0);
+    for(let i=0;i<n;i++){
+      const t=i/SR;let s=0;
+      for(let k=0;k<voices.length;k++){
+        const v=voices[k],f=v.f?v.f(t):440;
+        ph[k]+=2*Math.PI*f/SR;
+        const c=((ph[k]/(2*Math.PI))%1+1)%1;
+        let w;
+        if(v.wave==='square')w=c<.5?1:-1;
+        else if(v.wave==='saw')w=2*c-1;
+        else if(v.wave==='tri')w=Math.abs(4*c-2)-1;
+        else if(v.wave==='noise')w=Math.random()*2-1;
+        else w=Math.sin(ph[k]);
+        s+=w*(v.a?v.a(t):1);
+      }
+      out[i]=s;
+    }
+    return out;
+  }
+  const lp=(d,c)=>{const a=Math.exp(-2*Math.PI*c/SR);let y=0;for(let i=0;i<d.length;i++){y=y*a+d[i]*(1-a);d[i]=y}return d};
+  const hp=(d,c)=>{const a=Math.exp(-2*Math.PI*c/SR);let y=0,pv=0;for(let i=0;i<d.length;i++){y=a*(y+d[i]-pv);pv=d[i];d[i]=y}return d};
+  const drive=(d,k)=>{for(let i=0;i<d.length;i++)d[i]=Math.tanh(d[i]*k);return d};
+  const dec=(t,r)=>Math.exp(-r*t);
+  const atk=(t,ms)=>Math.min(1,t/(ms/1000));
+  function place(total,parts){
+    const out=new Float32Array(Math.max(1,Math.floor(SR*total)));
+    for(const p of parts){const o=Math.floor(SR*p.at),g=p.g==null?1:p.g;
+      for(let i=0;i<p.d.length;i++){const j=o+i;if(j>=0&&j<out.length)out[j]+=p.d[i]*g}}
+    return out;
+  }
+  function finish(d){
+    let pk=0;for(let i=0;i<d.length;i++){const a=Math.abs(d[i]);if(a>pk)pk=a}
+    if(pk>1e-4){const g=.92/pk;for(let i=0;i<d.length;i++)d[i]*=g}
+    const f=Math.floor(SR*.006);
+    for(let i=0;i<f&&i<d.length;i++){d[i]*=i/f;d[d.length-1-i]*=i/f}
+    return d;
+  }
+  function toBlob(d){
+    const ctx=AudioEngine.getContext(),b=ctx.createBuffer(1,d.length,SR);
+    b.getChannelData(0).set(d);
+    return AudioProcessing.encodeWAV(b);
+  }
+  // Percussion helpers
+  const tom=(f0,f1,d)=>synth(d,[{wave:'sine',f:t=>f0+(f1-f0)*(t/d),a:t=>atk(t,2)*dec(t,9)}]);
+  const cym=d=>hp(synth(d,[{wave:'noise',a:t=>atk(t,1)*dec(t,7)}]),6000);
+  const kick=d=>synth(d,[{wave:'sine',f:t=>160*Math.pow(.22,t/d),a:t=>atk(t,2)*dec(t,7)}]);
+
+  const PACK=[
+    {n:'Bass Drop',i:'💥',c:'purple',k:'Effects',make:()=>drive(synth(1.3,[
+      {wave:'sine',f:t=>150*Math.pow(.2,t/1.3),a:t=>dec(t,2.2)},
+      {wave:'sine',f:t=>75*Math.pow(.2,t/1.3),a:t=>.6*dec(t,2)}]),1.7)},
+
+    {n:'Air Horn',i:'📯',c:'red',k:'Effects',make:()=>{
+      const v=f=>({wave:'saw',f:t=>f*(1+.005*Math.sin(2*Math.PI*5.5*t)),a:t=>.28*atk(t,25)*dec(t,1)});
+      return drive(synth(1,[v(370),v(466),v(554),v(740)]),1.4)}},
+
+    {n:'Sad Trombone',i:'🎺',c:'orange',k:'Funny',make:()=>place(2,
+      [[0,.36,311],[.36,.36,294],[.72,.36,277],[1.08,.85,247]].map(([at,d,f0])=>({at,d:synth(d,[
+        {wave:'saw',f:t=>f0*Math.pow(.94,t/d)*(1+.012*Math.sin(2*Math.PI*5*t)),a:t=>.5*atk(t,35)*dec(t,1.5)},
+        {wave:'saw',f:t=>2*f0*Math.pow(.94,t/d),a:t=>.12*atk(t,35)*dec(t,2.2)}])})))},
+
+    {n:'Ba-Dum-Tss',i:'🥁',c:'yellow',k:'Funny',make:()=>place(1.4,[
+      {at:0,d:tom(240,120,.22)},{at:.16,d:tom(190,95,.22)},{at:.33,d:cym(1),g:.5}])},
+
+    {n:'Boing',i:'🏀',c:'green',k:'Funny',make:()=>synth(.55,[
+      {wave:'sine',f:t=>190+170*Math.sin(2*Math.PI*17*t)*dec(t,5),a:t=>atk(t,4)*dec(t,5.5)}])},
+
+    {n:'Dun Dun Dunnn',i:'🎬',c:'red',k:'Effects',make:()=>{
+      const stab=(f,d)=>synth(d,[
+        {wave:'saw',f:()=>f,a:t=>.4*atk(t,15)*dec(t,3)},
+        {wave:'saw',f:()=>f*1.005,a:t=>.4*atk(t,15)*dec(t,3)},
+        {wave:'sine',f:()=>f/2,a:t=>.5*atk(t,15)*dec(t,2.5)}]);
+      return place(2.4,[{at:0,d:stab(147,.45)},{at:.5,d:stab(139,.45)},{at:1,d:stab(110,1.3)}])}},
+
+    {n:'Error Buzz',i:'❌',c:'red',k:'Alerts',make:()=>drive(synth(.5,[
+      {wave:'square',f:()=>92,a:t=>.5*dec(t,1.2)},
+      {wave:'square',f:()=>117,a:t=>.4*dec(t,1.2)}]),1.5)},
+
+    {n:'Coin',i:'🪙',c:'yellow',k:'Effects',make:()=>place(.5,[
+      {at:0,d:synth(.07,[{wave:'square',f:()=>988,a:t=>.5*dec(t,10)}])},
+      {at:.07,d:synth(.35,[{wave:'square',f:()=>1319,a:t=>.5*dec(t,7)}])}])},
+
+    {n:'Power Up',i:'⬆️',c:'green',k:'Effects',make:()=>{
+      const notes=[262,330,392,523,659,784,1047];
+      return place(.75,notes.map((f,idx)=>({at:idx*.07,d:synth(.16,[
+        {wave:'square',f:()=>f,a:t=>.45*dec(t,12)}])})))}},
+
+    {n:'Level Up',i:'✨',c:'teal',k:'Effects',make:()=>{
+      const notes=[523,659,784,1047,1319];
+      return place(1.3,notes.map((f,idx)=>({at:idx*.1,d:synth(.9,[
+        {wave:'sine',f:()=>f,a:t=>.35*dec(t,3.5)},
+        {wave:'sine',f:()=>f*2.01,a:t=>.12*dec(t,5)}])})))}},
+
+    {n:'Laser',i:'⚡',c:'blue',k:'Effects',make:()=>synth(.3,[
+      {wave:'square',f:t=>1800*Math.pow(.09,t/.3),a:t=>.5*dec(t,7)}])},
+
+    {n:'Applause',i:'👏',c:'orange',k:'Effects',make:()=>{
+      const n=Math.floor(SR*2.4),d=new Float32Array(n);
+      for(let c=0;c<340;c++){
+        const st=Math.floor(Math.random()*n*.92),len=Math.floor(SR*.02*(.5+Math.random()));
+        for(let i=0;i<len&&st+i<n;i++)d[st+i]+=(Math.random()*2-1)*Math.exp(-14*i/SR*8)*.5;
+      }
+      const env=i=>Math.min(1,i/(SR*.25))*Math.min(1,(n-i)/(SR*.5));
+      for(let i=0;i<n;i++)d[i]*=env(i);
+      return hp(lp(d,7000),400)}},
+
+    {n:'Crickets',i:'🦗',c:'green',k:'Funny',make:()=>{
+      const parts=[];
+      for(let g=0;g<4;g++)for(let c=0;c<3;c++)
+        parts.push({at:g*.62+c*.075,d:synth(.045,[
+          {wave:'square',f:t=>4300+300*Math.sin(2*Math.PI*180*t),a:t=>.3*atk(t,3)*dec(t,45)}])});
+      return place(2.8,parts)}},
+
+    {n:'Drum Roll',i:'🥁',c:'pink',k:'Music',make:()=>{
+      const parts=[];let t=0,gap=.075;
+      while(t<1.6){parts.push({at:t,d:hp(synth(.05,[{wave:'noise',a:x=>.5*dec(x,45)}]),1800)});t+=gap;gap=Math.max(.022,gap*.94)}
+      parts.push({at:1.62,d:cym(1.1)});
+      return place(2.9,parts)}},
+
+    {n:'Siren',i:'🚨',c:'red',k:'Alerts',make:()=>synth(2,[
+      {wave:'square',f:t=>700+280*Math.sin(2*Math.PI*.9*t),a:t=>.4*atk(t,60)*Math.min(1,(2-t)/.3)}])},
+
+    {n:'Whoosh',i:'💨',c:'blue',k:'Effects',make:()=>{
+      let d=synth(.8,[{wave:'noise',a:t=>Math.sin(Math.PI*t/.8)}]);
+      d=lp(d,900);d=hp(d,180);
+      for(let i=0;i<d.length;i++)d[i]*=1+2.2*Math.sin(Math.PI*(i/d.length));
+      return d}},
+
+    {n:'Suspense',i:'😱',c:'purple',k:'Effects',make:()=>synth(2.2,[
+      {wave:'saw',f:t=>180*Math.pow(1.9,t/2.2),a:t=>.2*Math.min(1,t/1.6)},
+      {wave:'saw',f:t=>186*Math.pow(1.9,t/2.2),a:t=>.2*Math.min(1,t/1.6)},
+      {wave:'sine',f:t=>90*Math.pow(1.9,t/2.2),a:t=>.25*Math.min(1,t/1.6)}])},
+
+    {n:'Slide Up',i:'🎶',c:'teal',k:'Funny',make:()=>lp(synth(.7,[
+      {wave:'sine',f:t=>420*Math.pow(4.2,t/.7)*(1+.02*Math.sin(2*Math.PI*7*t)),a:t=>.5*atk(t,20)*Math.min(1,(.7-t)/.12)}]),9000)},
+
+    {n:'Slide Down',i:'🎵',c:'orange',k:'Funny',make:()=>lp(synth(.7,[
+      {wave:'sine',f:t=>1700*Math.pow(.24,t/.7)*(1+.02*Math.sin(2*Math.PI*7*t)),a:t=>.5*atk(t,20)*Math.min(1,(.7-t)/.12)}]),9000)},
+
+    {n:'Raspberry',i:'😜',c:'pink',k:'Funny',make:()=>drive(lp(synth(.8,[
+      {wave:'saw',f:t=>78+26*Math.sin(2*Math.PI*23*t)+12*Math.sin(2*Math.PI*7*t),a:t=>.6*atk(t,25)*Math.min(1,(.8-t)/.15)}]),1100),1.8)},
+
+    {n:'Explosion',i:'💣',c:'red',k:'Effects',make:()=>{
+      const a=lp(synth(1.6,[{wave:'noise',a:t=>atk(t,3)*dec(t,3.2)}]),700);
+      const b=synth(1.6,[{wave:'sine',f:t=>110*Math.pow(.25,t/1.6),a:t=>.9*dec(t,2.6)}]);
+      for(let i=0;i<a.length;i++)a[i]=a[i]*.8+b[i];
+      return drive(a,1.5)}},
+
+    {n:'Correct',i:'✅',c:'green',k:'Alerts',make:()=>place(1,[
+      {at:0,d:synth(.9,[{wave:'sine',f:()=>1047,a:t=>.4*dec(t,4)},{wave:'sine',f:()=>1568,a:t=>.18*dec(t,5)}])},
+      {at:.12,d:synth(.85,[{wave:'sine',f:()=>1319,a:t=>.4*dec(t,4)}])}])},
+
+    {n:'Wrong',i:'🔇',c:'red',k:'Alerts',make:()=>drive(synth(.7,[
+      {wave:'square',f:()=>110,a:t=>.5*atk(t,8)*Math.min(1,(.7-t)/.1)},
+      {wave:'square',f:()=>104,a:t=>.4*atk(t,8)*Math.min(1,(.7-t)/.1)}]),1.4)},
+
+    {n:'Heartbeat',i:'💓',c:'pink',k:'Effects',make:()=>place(2,[
+      {at:0,d:kick(.3)},{at:.3,d:kick(.34),g:.75},
+      {at:1,d:kick(.3)},{at:1.3,d:kick(.34),g:.75}])},
+
+    {n:'Record Scratch',i:'💿',c:'purple',k:'Effects',make:()=>{
+      let d=synth(.6,[{wave:'noise',a:t=>.6*Math.min(1,(.6-t)/.1)}]);
+      d=lp(d,2600);d=hp(d,300);
+      for(let i=0;i<d.length;i++){const t=i/SR;d[i]*=.5+.5*Math.sin(2*Math.PI*11*t*(1-t))}
+      return d}},
+
+    {n:'Fanfare',i:'🎉',c:'yellow',k:'Music',make:()=>{
+      const note=(f,d)=>synth(d,[
+        {wave:'saw',f:()=>f,a:t=>.3*atk(t,18)*dec(t,2.2)},
+        {wave:'saw',f:()=>f*1.006,a:t=>.3*atk(t,18)*dec(t,2.2)},
+        {wave:'sine',f:()=>f/2,a:t=>.25*atk(t,18)*dec(t,2)}]);
+      return place(2,[{at:0,d:note(392,.22)},{at:.2,d:note(392,.22)},
+        {at:.4,d:note(392,.22)},{at:.6,d:note(523,.7)},{at:1.15,d:note(784,.85)}])}},
+  ];
+
+  async function install(){
+    const modal=document.getElementById('exportModal'),fill=document.getElementById('exportFill'),
+          text=document.getElementById('exportText'),title=document.getElementById('exportTitle'),
+          actions=document.getElementById('exportActions');
+    modal.classList.add('open');actions.style.display='none';
+    title.textContent='Building meme pack...';fill.style.width='0%';
+    const BANK='Memes';
+    try{
+      if(!AppState.banks.includes(BANK)){AppState.banks.push(BANK);await Storage.saveBank(BANK)}
+      let made=0;
+      for(let i=0;i<PACK.length;i++){
+        const def=PACK[i];
+        text.textContent=`${i+1}/${PACK.length} — ${def.n}`;
+        fill.style.width=`${((i+1)/PACK.length)*100}%`;
+        try{
+          if(AppState.sounds.some(s=>s.name===def.n&&(s.bank||'Main')===BANK))continue;
+          const blob=toBlob(finish(def.make()));
+          const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;
+          const meta={id,name:def.n,icon:def.i,category:def.k,color:def.c,volume:80,
+                      bank:BANK,order:AppState.sounds.filter(s=>(s.bank||'Main')===BANK).length,loopDefault:false};
+          await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);await AudioEngine.decode(id,blob);
+          AppState.sounds.push(meta);made++;
+        }catch(e){console.error('meme sound failed:',def.n,e)}
+        await new Promise(r=>setTimeout(r,0));   // keep the UI responsive
+      }
+      AppState.activeBank=BANK;AppState.activeCategory='All';
+      UI.renderBanks();UI.renderCategories();UI.renderGrid();
+      title.textContent='Done';
+      text.textContent=made?`Added ${made} sounds to "${BANK}"`:'Pack already installed';
+      actions.style.display='flex';
+    }catch(e){
+      title.textContent='Failed';text.textContent=e.message||'Could not build pack';
+      actions.style.display='flex';
+    }
+  }
+  return{install,count:PACK.length,_PACK:PACK,_synth:synth,_finish:finish,_toBlob:toBlob};
+})();
+
 // ═══ UI ═══
 const UI={
   getSoundsForBank(){return AppState.sounds.filter(s=>(s.bank||'Main')===AppState.activeBank).sort((a,b)=>(a.order??0)-(b.order??0))},
@@ -1668,6 +1891,8 @@ function setupEvents(){
   document.getElementById('exportBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');ExportImport.exportLib()});document.getElementById('exportDone').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('open'));document.getElementById('exportModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('exportModal').classList.remove('open')});
   document.getElementById('importBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');document.getElementById('importFileInput').click()});document.getElementById('importFileInput').addEventListener('change',e=>{if(e.target.files[0])ExportImport.importFile(e.target.files[0]);e.target.value=''});document.getElementById('importCancel').addEventListener('click',()=>{document.getElementById('importPreviewModal').classList.remove('open');window._iData=null});document.getElementById('importConfirm').addEventListener('click',()=>ExportImport.confirmImport());document.getElementById('importPreviewModal').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('importPreviewModal').classList.remove('open');window._iData=null}});
   document.getElementById('clearAllBtn').addEventListener('click',async()=>{if(!confirm('Delete ALL sounds?')||!confirm('Cannot undo.'))return;AudioEngine.stopAll();AppState.decodedBuffers.clear();WaveThumb.clear();await Storage.clearAll();AppState.sounds=[];UI.renderBanks();UI.renderCategories();UI.renderGrid();document.getElementById('settingsModal').classList.remove('open');UI.showToast('Cleared')});
+
+  document.getElementById('memePackBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('open');MemePack.install()});
 
   // ── Mode switcher ──
   document.getElementById('modeTabs').addEventListener('click',e=>{const t=e.target.closest('.mode-tab');if(t)switchMode(t.dataset.mode)});
