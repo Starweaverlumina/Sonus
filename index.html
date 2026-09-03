@@ -268,6 +268,15 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .sl-vol{flex:1;height:5px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none}
 .sl-vol::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent3);cursor:pointer}
 .sl-mini{background:var(--surface3);color:var(--text);border:none;border-radius:8px;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer}
+.sl-chip{display:flex;align-items:center;gap:7px;flex:1;min-width:0;background:var(--surface3);border:1.5px solid transparent;border-radius:10px;padding:6px 10px;cursor:pointer;text-align:left}
+.sl-chip.empty{border-color:var(--accent4);border-style:dashed;background:rgba(255,170,0,.08)}
+.sl-chip .chip-name{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-chip .chip-hint{font-size:10px;color:var(--text2);flex-shrink:0}
+.grid-nums{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin-top:8px}
+.grid-nums span{font-size:9px;color:var(--text2);text-align:center;font-weight:700}
+.song-howto{background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.7;color:var(--text2);margin-bottom:10px}
+.song-howto b{color:var(--text)}
+.song-starter{width:100%;justify-content:center;margin-bottom:10px;background:var(--accent2);color:#000}
 .song-layers{display:flex;flex-direction:column;gap:8px}
 .song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
@@ -326,11 +335,17 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       <input type="range" id="songBpm" min="40" max="200" step="1" value="100">
       <select id="songBars" title="Bars"><option value="1">1 bar</option><option value="2">2 bars</option></select>
     </div>
-    <div class="song-section-label">Layers <span style="font-weight:400;text-transform:none;letter-spacing:0">— all play together</span></div>
+    <div class="song-howto">
+      <b>1.</b> Tap a track's sound button to choose a sound &nbsp;
+      <b>2.</b> Tap the squares to place hits on the beat &nbsp;
+      <b>3.</b> Press Play. Tracks all play together.
+    </div>
+    <button class="chop-btn song-starter" id="songStarterBtn">🥁 Load a starter beat</button>
+    <div class="song-section-label">Tracks <span style="font-weight:400;text-transform:none;letter-spacing:0">— these play at the same time</span></div>
     <div class="song-layers" id="songLayers"></div>
     <div class="song-add-row">
-      <button class="chop-btn" id="songAddBeatBtn">➕ Beat Layer</button>
-      <button class="chop-btn" id="songAddChainBtn">➕ Chain Layer</button>
+      <button class="chop-btn" id="songAddBeatBtn">➕ Drum track</button>
+      <button class="chop-btn" id="songAddChainBtn">➕ Sound sequence</button>
     </div>
     <div id="songChainWrap" style="display:none">
       <div class="song-section-label">Steps <span id="songStepsCount"></span></div>
@@ -475,6 +490,14 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     </div>
     <div class="modal-actions"><button class="danger-btn" id="editDelete">Delete</button><button class="alt-btn" id="editDownload">⬇ WAV</button><button class="save-btn" id="editSave">Save</button></div>
     <div class="modal-actions" style="margin-top:8px"><button class="cancel-btn" id="editClose">Cancel</button></div>
+  </div></div>
+
+  <!-- SOUND PICKER (for song layers) -->
+  <div class="modal-overlay" id="soundPickModal"><div class="modal">
+    <h2>Choose a sound</h2>
+    <div class="modal-sub" id="soundPickFor">This layer will play the sound you pick.</div>
+    <div class="song-lib-list" id="soundPickList" style="max-height:50vh"></div>
+    <div class="modal-actions"><button class="cancel-btn" id="soundPickClose">Cancel</button></div>
   </div></div>
 
   <!-- NOTE EDITOR -->
@@ -1525,6 +1548,12 @@ const SongBuilder=(()=>{
     return song;
   }
   async function persist(){const s=active();if(s){try{await Storage.saveSong(s)}catch(e){}}}
+  // switchMode() starts open() without awaiting it, so a fast tap can land
+  // before songs are loaded. Mutators wait for that load instead of no-oping.
+  async function ensureLoaded(){
+    if(opening)await opening;
+    if(!songs.length||!active())await open();
+  }
 
   function renderSelect(){
     const sel=document.getElementById('songSelect');if(!sel)return;
@@ -1545,17 +1574,26 @@ const SongBuilder=(()=>{
       const snd=l.soundId?AppState.sounds.find(x=>x.id===l.soundId):null;
       let body;
       if(l.type==='grid'){
-        body=`<div class="grid-row" data-lid="${l.id}">`+l.pattern.map((on,i)=>
+        const nums=l.pattern.map((_,i)=>`<span>${i%4===0?(i/4+1):''}</span>`).join('');
+        body=`<div class="grid-nums">${nums}</div><div class="grid-row" data-lid="${l.id}">`+l.pattern.map((on,i)=>
           `<button class="cell ${on?'on':''} ${i%4===0?'beat':''}" data-lid="${l.id}" data-i="${i}"></button>`).join('')+`</div>`;
       }else{
-        body=`<div class="chain-note">${l.steps.length} step${l.steps.length===1?'':'s'} — select to edit below</div>`;
+        body=`<div class="chain-note">${l.steps.length} step${l.steps.length===1?'':'s'} — tap this track to edit its list below</div>`;
       }
+      // The sound lives on the track itself: tap the chip to change it.
+      const chip=l.type==='grid'
+        ?`<button class="sl-chip ${snd?'':'empty'}" data-act="pick" data-lid="${l.id}">
+            <span class="sl-icon">${snd?snd.icon:'👆'}</span>
+            <span class="chip-name">${snd?esc(snd.name):'Tap to choose a sound'}</span>
+            <span class="chip-hint">change</span></button>`
+        :`<button class="sl-chip" data-act="rename" data-lid="${l.id}">
+            <span class="sl-icon">🔗</span><span class="chip-name">${esc(l.name)}</span>
+            <span class="chip-hint">sequence</span></button>`;
       return`<div class="song-layer ${sel?'sel':''}" data-lid="${l.id}">
         <div class="sl-head" data-lid="${l.id}">
-          <span class="sl-icon">${l.type==='grid'?(snd?snd.icon:'➕'):'🔗'}</span>
-          <span class="sl-name">${esc(l.type==='grid'?(snd?snd.name:'tap a sound below'):l.name)}</span>
+          ${chip}
           <button class="sl-btn ${l.muted?'off':''}" data-act="mute" data-lid="${l.id}" title="Mute">${l.muted?'🔇':'🔊'}</button>
-          <button class="sl-btn del" data-act="del" data-lid="${l.id}" title="Delete layer">✕</button>
+          <button class="sl-btn del" data-act="del" data-lid="${l.id}" title="Delete track">✕</button>
         </div>
         ${body}
         ${sel?`<div class="sl-extra">
@@ -1585,7 +1623,12 @@ const SongBuilder=(()=>{
   function renderLibrary(){
     const list=document.getElementById('songLibList'),l=activeLayer();if(!list)return;
     const hint=document.getElementById('songLibHint');
-    if(hint)hint.textContent=l&&l.type==='grid'?'Tap a sound to put it on this layer':'Tap a sound to add a step';
+    // Grid tracks pick their sound from the chip on the track itself, so the
+    // long library list below is only shown when it actually does something.
+    const showList=!!(l&&l.type==='chain');
+    list.style.display=showList?'':'none';
+    if(hint){hint.style.display=showList?'':'none';hint.textContent='Tap a sound to add it to this sequence'}
+    if(!showList)return;
     const sounds=AppState.sounds.filter(s=>!s.tts);
     if(!sounds.length){list.innerHTML='<div class="lib-pick-empty">No sounds in your library yet</div>';return}
     list.innerHTML=sounds.map(s=>`<div class="lib-pick-item" data-id="${s.id}"><div class="lp-icon pad-${s.color}">${s.icon}</div><span class="lp-name">${esc(s.name)}</span><span class="lp-dur">${esc(s.bank||'Main')}</span></div>`).join('');
@@ -1613,6 +1656,7 @@ const SongBuilder=(()=>{
     await persist();
   }
   async function addLayer(type){
+    await ensureLoaded();
     const song=active();if(!song)return;
     const l=type==='chain'
       ?{id:uid(),name:`Chain ${song.layers.length+1}`,type:'chain',steps:[],loop:true,muted:false,volume:1}
@@ -1640,6 +1684,7 @@ const SongBuilder=(()=>{
   }
   // Library tap: assign to a grid layer, or append a step to a chain layer
   async function addStep(soundId){
+    await ensureLoaded();
     const song=active();if(!song)return;
     let l=activeLayer(); if(!l){l=song.layers[0];activeLayerId=l.id}
     if(l.type==='grid'){l.soundId=soundId;await persist();renderLayers();UI.showToast('Sound set for this layer')}
@@ -1663,6 +1708,54 @@ const SongBuilder=(()=>{
     activeId=songs[0].id;activeLayerId=songs[0].layers[0].id;renderAll();UI.showToast('Song deleted');
   }
   function toggleLoop(){const s=active();if(!s)return;s.loop=!s.loop;persist();updateControls()}
+
+  // ── sound picker (opened from a track's chip) ──
+  let pickingFor=null;
+  function openPicker(lid){
+    const song=active();if(!song)return;
+    const l=song.layers.find(x=>x.id===lid);if(!l)return;
+    pickingFor=lid;
+    document.getElementById('soundPickFor').textContent=`"${l.name}" will play the sound you pick.`;
+    const list=document.getElementById('soundPickList');
+    const sounds=AppState.sounds.filter(x=>!x.tts);
+    list.innerHTML=sounds.length
+      ?sounds.map(x=>`<div class="lib-pick-item" data-id="${x.id}"><div class="lp-icon pad-${x.color}">${x.icon}</div><span class="lp-name">${esc(x.name)}</span><span class="lp-dur">${esc(x.bank||'Main')}</span></div>`).join('')
+      :'<div class="lib-pick-empty">No sounds yet — add some on the Pads tab first</div>';
+    document.getElementById('soundPickModal').classList.add('open');
+  }
+  function closePicker(){document.getElementById('soundPickModal').classList.remove('open');pickingFor=null}
+  async function pickSound(soundId){
+    const song=active();if(!song||!pickingFor)return;
+    const l=song.layers.find(x=>x.id===pickingFor);if(!l)return;
+    l.soundId=soundId;
+    const snd=AppState.sounds.find(x=>x.id===soundId);
+    if(snd)l.name=snd.name;
+    await persist();closePicker();renderLayers();
+    if(snd)AudioEngine.playScheduled(soundId,(snd.volume!=null?snd.volume:80)/100,AudioEngine.getContext().currentTime+.01);
+  }
+
+  // ── one-tap starter beat, so the grid is never a blank puzzle ──
+  async function starterBeat(){
+    await ensureLoaded();
+    const song=active();if(!song)return;
+    const pool=AppState.sounds.filter(s=>!s.tts);
+    if(!pool.length){UI.showToast('Add some sounds on the Pads tab first');return}
+    const pick=(re,used)=>pool.find(s=>re.test(s.name)&&!used.includes(s.id));
+    const used=[];
+    const kick =pick(/kick|bass|drop|boom|thud|explos/i,used)||pool[0];                used.push(kick&&kick.id);
+    const snare=pick(/snare|clap|rim|ba-?dum|tss|applau/i,used)||pool[1]||pool[0];      used.push(snare&&snare.id);
+    const hat  =pick(/hat|tick|click|tap|cymbal|coin|ding/i,used)||pool[2]||pool[0];
+    song.bpm=100;song.bars=1;song.loop=true;
+    const mk=(name,sound,cells)=>({id:uid(),name:sound?sound.name:name,type:'grid',soundId:sound?sound.id:null,
+      pattern:Array.from({length:16},(_,i)=>cells.includes(i)?1:0),loop:true,muted:false,volume:1});
+    song.layers=[
+      mk('Kick',kick,[0,4,8,12]),
+      mk('Snare',snare,[4,12]),
+      mk('Hat',hat,[2,6,10,14]),
+    ];
+    activeLayerId=song.layers[0].id;
+    await persist();renderAll();UI.showToast('Starter beat loaded — press Play');
+  }
 
   // ── playback ──
   function clearHighlights(){
@@ -1754,7 +1847,8 @@ const SongBuilder=(()=>{
     finish();UI.renderGrid();
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
-         addLayer,removeLayer,selectLayer,toggleLayer,setLayerVolume,setBpm,setBars,toggleCell,renderLibrary};
+         addLayer,removeLayer,selectLayer,toggleLayer,setLayerVolume,setBpm,setBars,toggleCell,renderLibrary,
+         openPicker,closePicker,pickSound,starterBeat};
 })();
 
 // ═══ MEME PACK ═══
@@ -2218,6 +2312,10 @@ function setupEvents(){
   });
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
+  document.getElementById('songStarterBtn').addEventListener('click',()=>SongBuilder.starterBeat());
+  document.getElementById('soundPickClose').addEventListener('click',()=>SongBuilder.closePicker());
+  document.getElementById('soundPickModal').addEventListener('click',e=>{if(e.target===e.currentTarget)SongBuilder.closePicker()});
+  document.getElementById('soundPickList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.pickSound(i.dataset.id)});
   document.getElementById('songAddBeatBtn').addEventListener('click',()=>SongBuilder.addLayer('grid'));
   document.getElementById('songAddChainBtn').addEventListener('click',()=>SongBuilder.addLayer('chain'));
   document.getElementById('songBpm').addEventListener('input',e=>SongBuilder.setBpm(e.target.value));
@@ -2228,6 +2326,10 @@ function setupEvents(){
   document.getElementById('songLayers').addEventListener('click',e=>{
     const cell=e.target.closest('.cell');
     if(cell){SongBuilder.toggleCell(cell.dataset.lid,+cell.dataset.i);return}
+    const chip=e.target.closest('.sl-chip');
+    if(chip){const lid=chip.dataset.lid;
+      if(chip.dataset.act==='pick')SongBuilder.openPicker(lid);else SongBuilder.toggleLayer(lid,'rename');
+      SongBuilder.selectLayer(lid);return}
     const mini=e.target.closest('.sl-mini');
     if(mini){SongBuilder.toggleLayer(mini.dataset.lid,mini.dataset.act);return}
     const btn=e.target.closest('.sl-btn');
