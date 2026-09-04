@@ -309,32 +309,32 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .st-mine{border-style:dashed}
 .st-beatbox{background:var(--surface);border:2px solid var(--surface3);border-radius:var(--radius);padding:10px;margin:0 0 12px}
 .bb-head{font-size:11px;color:var(--text2);padding:0 0 8px 2px;font-weight:600}
-.bb-recs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0 0 12px}
-.bb-recs::-webkit-scrollbar{display:none}
-.bb-rec{flex-shrink:0;min-height:52px;padding:8px 14px;border-radius:12px;border:2px solid var(--surface3);
+.bb-recs{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 0 12px}
+.bb-rec{min-height:54px;padding:8px 10px;border-radius:12px;border:2px solid var(--surface3);
   background:var(--surface2);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;
-  gap:2px;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.bb-rec b{font-size:13px;font-weight:800;color:var(--text)}
-.bb-rec i{font-style:normal;font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.2px}
+  gap:2px;font-family:'DM Sans',sans-serif;overflow:hidden}
+.bb-rec b{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap}
+.bb-rec i{font-style:normal;font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .bb-rec.sel{background:var(--accent2);border-color:var(--accent2)}
 .bb-rec.sel b,.bb-rec.sel i{color:#06231a}
 .bb-rec:active{transform:scale(.95)}
-.bb-scroll{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.bb-scroll::-webkit-scrollbar{display:none}
-.bl-row{display:flex;align-items:center;gap:3px;margin-bottom:3px;width:max-content}
-.bl-lab{position:sticky;left:0;z-index:2;flex-shrink:0;width:52px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;background:var(--surface);font-size:15px;line-height:1.1}
-.bl-lab i{font-style:normal;font-size:8px;color:var(--text2);font-weight:700;letter-spacing:.3px}
-.bl-cell{flex-shrink:0;width:34px;height:34px;border-radius:8px;border:none;padding:0;cursor:pointer;
+.bb-grid{display:block}
+.bg-head,.bg-row{display:grid;grid-template-columns:30px repeat(5,1fr);gap:5px;align-items:center}
+.bg-head{position:sticky;top:0;z-index:3;background:var(--surface);padding:4px 0 6px;
+  border-bottom:1.5px solid var(--surface3);margin-bottom:5px}
+.bg-lane{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:16px;line-height:1}
+.bg-lane i{font-style:normal;font-size:8px;font-weight:800;color:var(--text2);letter-spacing:.3px}
+.bg-row{margin-bottom:5px;border-radius:9px}
+.bg-row.dw{background:rgba(255,255,255,.035)}
+.bg-row.ph{background:rgba(255,170,0,.16);box-shadow:inset 0 0 0 2px var(--accent4)}
+.bg-num{text-align:center;font-size:11px;font-weight:800;color:var(--surface3)}
+.bg-num.on{color:var(--text2);font-size:14px}
+.bl-cell{width:100%;height:42px;border-radius:9px;border:none;padding:0;cursor:pointer;
   background:var(--surface3);transition:background .08s,transform .08s}
-.bl-cell.dw{background:var(--surface2);box-shadow:inset 2px 0 0 var(--surface3)}
 .bl-cell.v1{background:var(--accent3)}
 .bl-cell.v2{background:var(--accent);box-shadow:0 0 10px rgba(255,61,113,.55)}
-.bl-cell.ph{outline:2px solid var(--accent4);outline-offset:-2px}
-.bl-cell:active{transform:scale(.86)}
-.bl-ruler .bl-cell,.bl-num{width:34px;height:14px}
-.bl-num{flex-shrink:0;text-align:center;font-size:10px;font-weight:700;color:var(--surface3)}
-.bl-num.on{color:var(--text2)}
+.bl-cell:active{transform:scale(.9)}
 .bb-foot{display:flex;gap:8px;padding-top:10px}
 .bb-btn{flex:1;min-height:44px;border-radius:10px;border:2px solid var(--surface3);background:var(--surface2);
   color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
@@ -372,6 +372,37 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .st-fx{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;padding:8px 2px;border-radius:12px;border:2px solid var(--surface3);background:var(--surface2);color:var(--text2);font-size:20px;cursor:pointer}
 .st-fx span{font-size:8px;font-weight:700}
 .st-fx.sel{border-color:var(--accent4);color:var(--accent4)}
+.sv-srcrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.sv-src{min-height:46px;border-radius:11px;border:2px solid var(--surface3);background:var(--surface);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.sv-src.sel{border-color:var(--accent2);color:var(--accent2)}
+.sv-src.rec{border-color:var(--accent);color:var(--accent);animation:stpulse 1s infinite}
+@keyframes stpulse{50%{opacity:.55}}
+.sv-src:active{transform:scale(.96)}
+.sv-lib{max-height:190px;overflow-y:auto;margin-bottom:10px;border:1.5px solid var(--surface3);border-radius:11px}
+.sv-libitem{display:flex;align-items:center;gap:9px;width:100%;min-height:48px;padding:6px 10px;border:none;
+  border-bottom:1px solid var(--surface3);background:transparent;cursor:pointer;text-align:left;
+  font-family:'DM Sans',sans-serif;color:var(--text)}
+.sv-libitem:last-child{border-bottom:none}
+.sv-libitem:active{background:var(--surface3)}
+.sv-li-ic{font-size:19px;flex-shrink:0}
+.sv-li-nm{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-li-dur{font-size:10px;color:var(--text2);flex-shrink:0}
+.sv-libempty{padding:16px 12px;font-size:12px;color:var(--text2);text-align:center}
+.sv-loaded{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:7px 10px;
+  background:var(--surface3);border-radius:10px}
+.sv-name{flex:1;font-size:12px;font-weight:700;color:var(--accent2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.sv-x{width:34px;height:34px;flex-shrink:0;border-radius:9px;border:none;background:var(--surface2);
+  color:var(--text2);font-size:14px;cursor:pointer}
+.sv-sl{margin-bottom:8px}
+.sv-fxbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.sv-fxbtns .bb-btn{font-size:11px;padding:0 2px}
+.sv-fxbtns .bb-btn[disabled]{opacity:.4;pointer-events:none}
+.st-part{position:relative;overflow:hidden}
+.sp-hold{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--accent);border-radius:0 3px 3px 0}
+.st-part.holding .sp-hold{width:100%;transition:width 3s linear}
+.st-part.holding{outline:2px solid var(--accent);outline-offset:-2px}
 .st-transport{display:flex;align-items:center;gap:10px}
 .st-beat{font-size:11px;font-weight:700;color:var(--text2);width:46px;text-align:center}
 .st-beat.pulse{animation:beatPulse .3s ease-out;color:var(--accent2)}
@@ -1212,7 +1243,7 @@ const Recorder=(()=>{let mr=null,chunks=[];
       VoiceEngine.resume();
     }}
   async function saveSoundQuick(name,blob){const id=crypto.randomUUID?.()??`${Date.now()}-${Math.random().toString(36).substr(2)}`;const order=AppState.sounds.filter(s=>(s.bank||'Main')===AppState.activeBank).length;const rc=CONFIG.PAD_COLORS[Math.floor(Math.random()*CONFIG.PAD_COLORS.length)].name;const ri=CONFIG.DEFAULT_ICONS[Math.floor(Math.random()*CONFIG.DEFAULT_ICONS.length)];const meta={id,name:`${name} ${AppState.sounds.length+1}`,icon:ri,category:'Voice',color:rc,volume:80,bank:AppState.activeBank,order,loopDefault:false};await Storage.saveMeta(meta);await Storage.saveAudio(id,blob);await AudioEngine.decode(id,blob);AppState.sounds.push(meta);UI.renderBanks();UI.renderCategories();UI.renderGrid();UI.showToast('Saved!')}
-  return{toggle};
+  return{toggle,saveSoundQuick};
 })();
 
 // ═══ BANKS ═══
@@ -2840,7 +2871,7 @@ const Studio=(()=>{
     if(!voiceBuf)return[];
     return[{step:0,fn:t=>{
       const c=ctx(),s=c.createBufferSource(),g=c.createGain();
-      s.buffer=voiceBuf;g.gain.value=.9;
+      s.buffer=voiceBuf;g.gain.value=voiceLevel;
       s.playbackRate.value=voicePitch;
       s.connect(g);g.connect(bus());
       try{s.start(t)}catch(e){}
@@ -2848,6 +2879,8 @@ const Studio=(()=>{
     }}];
   }
   let voicePitch=1, live=[];
+  // voiceOrig keeps the untouched buffer so Reverse and Echo stay undoable.
+  let voiceOrig=null, voiceName='', voiceSemi=0, voiceLevel=.9, libOpen=false;
 
   // ── scheduler ──
   function scheduleBar(bar,base){
@@ -2895,13 +2928,29 @@ const Studio=(()=>{
     {k:'melody',icon:'✨', label:'Melody'},
     {k:'voice', icon:'🎤', label:'My Voice'},
   ];
+  // Presets are shortcuts on the pitch slider, not a separate mechanism - they
+  // set semitones, the slider shows where you landed, and dragging the slider
+  // simply moves you off whichever preset you were on.
   const VOICE_FX=[
-    {id:'chip',   icon:'🐿️', label:'Chipmunk', rate:1.7},
-    {id:'normal', icon:'🙂', label:'Normal',   rate:1},
-    {id:'monster',icon:'👹', label:'Monster',  rate:.62},
-    {id:'robot',  icon:'🤖', label:'Robot',    rate:.85},
+    {id:'mouse',  icon:'🐭', label:'Mouse',    semi:12},
+    {id:'chip',   icon:'🐿️', label:'Chipmunk', semi:7},
+    {id:'kid',    icon:'🧒', label:'Kid',      semi:4},
+    {id:'normal', icon:'🙂', label:'Normal',   semi:0},
+    {id:'radio',  icon:'📻', label:'Radio',    semi:-3},
+    {id:'trailer',icon:'🎬', label:'Trailer',  semi:-6},
+    {id:'monster',icon:'👹', label:'Monster',  semi:-9},
+    {id:'giant',  icon:'🐻', label:'Giant',    semi:-12},
   ];
   let voiceFx='normal';
+
+  // Voice sources: a fresh recording, a sound already in the soundboard, or a
+  // file off the device. All three end up as the same AudioBuffer, so every
+  // effect below works the same whichever one it came from.
+  const VOICE_SOURCES=[
+    {id:'rec', icon:'⏺', label:'Record'},
+    {id:'lib', icon:'📚', label:'My Sounds'},
+    {id:'up',  icon:'📁', label:'Upload'},
+  ];
 
   function flashAt(base,bar){
     const c=ctx(),delay=Math.max(0,(base-c.currentTime)*1000);
@@ -2932,14 +2981,21 @@ const Studio=(()=>{
     let beatPanel='';
     if(beatOpen){
       const pat=pattern();
-      const ruler=Array.from({length:STEPS},(_,i)=>
-        `<span class="bl-num ${i%4===0?'on':''}">${i%4===0?(i/4+1):'·'}</span>`).join('');
-      const rows=LANES.map(L=>{
-        const row=pat[L.k]||[];
-        const cells=Array.from({length:STEPS},(_,i)=>
-          `<button class="bl-cell v${row[i]||0} ${i%4===0?'dw':''}" data-lane="${L.k}" data-step="${i}"
-             aria-label="${L.label} step ${i+1}"></button>`).join('');
-        return`<div class="bl-row"><span class="bl-lab">${L.icon}<i>${L.label}</i></span>${cells}</div>`;
+      // The bar runs DOWN the page, one row per step, with the five drums as
+      // columns. Thumbs scroll up and down far more comfortably than side to
+      // side, and turning the grid this way also makes every cell twice the
+      // size it was.
+      const head=`<div class="bg-head"><span class="bg-num"></span>`+
+        LANES.map(L=>`<span class="bg-lane">${L.icon}<i>${L.label}</i></span>`).join('')+`</div>`;
+      const TICKS=['1','e','&','a'];
+      const rows=Array.from({length:STEPS},(_,i)=>{
+        const cells=LANES.map(L=>{
+          const v=(pat[L.k]||[])[i]||0;
+          return`<button class="bl-cell v${v}" data-lane="${L.k}" data-step="${i}"
+            aria-label="${L.label} step ${i+1}"></button>`;
+        }).join('');
+        return`<div class="bg-row ${i%4===0?'dw':''}" data-step="${i}">
+          <span class="bg-num ${i%4===0?'on':''}">${i%4===0?(i/4+1):TICKS[i%4]}</span>${cells}</div>`;
       }).join('');
       const cur=recipeOf[st.id];
       const recs=RECIPES.map(r=>
@@ -2949,10 +3005,7 @@ const Studio=(()=>{
         <div class="bb-head"><span>Start from a classic — then change it</span></div>
         <div class="bb-recs">${recs}</div>
         <div class="bb-head"><span>Tap once = hit · twice = accent · again = off</span></div>
-        <div class="bb-scroll">
-          <div class="bl-row bl-ruler"><span class="bl-lab"></span>${ruler}</div>
-          ${rows}
-        </div>
+        <div class="bb-grid">${head}${rows}</div>
         <div class="bb-foot">
           <button class="bb-btn" id="bbClear">🧹 Empty</button>
           <button class="bb-btn" id="bbReset">↺ Reset</button>
@@ -2963,12 +3016,30 @@ const Studio=(()=>{
     const parts=PARTS.map(p=>{
       const active=on[p.k];
       const needsRec=p.k==='voice'&&!voiceBuf;
+      const sub=p.k==='voice'&&voiceBuf?voiceName:null;
       return`<button class="st-part ${active?'on':''}" data-part="${p.k}">
-        <span class="sp-icon">${p.icon}</span><span class="sp-label">${p.label}</span>
-        <span class="sp-state">${needsRec?'record':(active?'ON':'off')}</span></button>`;
+        <span class="sp-icon">${p.icon}</span><span class="sp-label">${sub?sub.slice(0,10):p.label}</span>
+        <span class="sp-state">${needsRec?'record':(active?'ON':'off')}</span>
+        <span class="sp-hold"></span></button>`;
     }).join('');
     const fx=VOICE_FX.map(f=>
       `<button class="st-fx ${f.id===voiceFx?'sel':''}" data-fx="${f.id}">${f.icon}<span>${f.label}</span></button>`).join('');
+    const srcs=VOICE_SOURCES.map(v=>{
+      const on2=v.id==='lib'&&libOpen;
+      const lbl=(v.id==='rec'&&recording)?'⏹ Stop':v.icon+' '+v.label;
+      return`<button class="sv-src ${on2?'sel':''} ${(v.id==='rec'&&recording)?'rec':''}" data-src="${v.id}">${lbl}</button>`;
+    }).join('');
+    // The library list is the soundboard's own sounds - anything already
+    // recorded, uploaded or made with effects is available here unchanged.
+    let lib='';
+    if(libOpen){
+      const avail=(AppState.sounds||[]).filter(x=>AppState.decodedBuffers.has(x.id));
+      lib=`<div class="sv-lib">${avail.length?avail.map(x=>{
+        const b=AppState.decodedBuffers.get(x.id);
+        return`<button class="sv-libitem" data-lib="${x.id}"><span class="sv-li-ic">${x.icon||'🔊'}</span>
+          <span class="sv-li-nm">${x.name}</span><span class="sv-li-dur">${b?b.duration.toFixed(1)+'s':''}</span></button>`;
+      }).join(''):'<div class="sv-libempty">No sounds yet — record one, or add sounds on the Sounds tab</div>'}</div>`;
+    }
     box.innerHTML=`
       <div class="st-strip"><div class="st-styles">${chips}</div></div>
       <div class="st-vars">${vars}</div>
@@ -2981,8 +3052,23 @@ const Studio=(()=>{
         <span class="ss-lab">🔥</span><span class="ss-val">groove</span></div>
       <div class="st-parts">${parts}</div>
       <div class="st-voice">
-        <button class="chop-btn" id="stRecBtn">${recording?'⏹ Stop recording':'⏺ Record my voice'}</button>
+        <div class="sv-srcrow">${srcs}</div>
+        ${lib}
+        ${voiceBuf?`<div class="sv-loaded"><span class="sv-name">🎧 ${voiceName}</span>
+          <button class="sv-x" id="stVoiceClear" title="Remove">✕</button></div>`:''}
         <div class="st-fxrow">${fx}</div>
+        <div class="st-slider sv-sl"><span class="ss-lab">🐻</span>
+          <input type="range" id="stVoicePitch" min="-12" max="12" value="${voiceSemi}">
+          <span class="ss-lab">🐭</span><span class="ss-val" id="stVoicePitchVal">${voiceSemi>0?'+':''}${voiceSemi}</span></div>
+        <div class="st-slider sv-sl"><span class="ss-lab">🔈</span>
+          <input type="range" id="stVoiceLevel" min="0" max="100" value="${Math.round(voiceLevel*100)}">
+          <span class="ss-lab">🔊</span><span class="ss-val" id="stVoiceLevelVal">${Math.round(voiceLevel*100)}%</span></div>
+        <div class="sv-fxbtns">
+          <button class="bb-btn" id="stVoiceRev" ${voiceBuf?'':'disabled'}>🔄 Reverse</button>
+          <button class="bb-btn" id="stVoiceEcho" ${voiceBuf?'':'disabled'}>🌊 Echo</button>
+          <button class="bb-btn" id="stVoiceUndo" ${voiceBuf?'':'disabled'}>↺ Undo</button>
+          <button class="bb-btn" id="stVoiceSave" ${voiceBuf?'':'disabled'}>💾 Save</button>
+        </div>
       </div>
       <div class="st-transport">
         <button class="action-btn btn-record" id="stPlay" style="flex:1">${playing?'<span>⏹</span> Stop':'<span>▶</span> Play'}</button>
@@ -3022,11 +3108,11 @@ const Studio=(()=>{
     stopPlayhead();
     phTimer=setInterval(()=>{
       if(!beatOpen)return stopPlayhead();
-      const cur=document.querySelector('.bl-cell.ph');
+      const cur=document.querySelector('.bg-row.ph');
       const step=playing?Math.floor(((ctx().currentTime-originTime)/stepDur())%STEPS):-1;
       if(cur&&+cur.dataset.step===step)return;
-      document.querySelectorAll('.bl-cell.ph').forEach(c=>c.classList.remove('ph'));
-      if(step>=0)document.querySelectorAll(`.bl-cell[data-step="${step}"]`).forEach(c=>c.classList.add('ph'));
+      document.querySelectorAll('.bg-row.ph').forEach(c=>c.classList.remove('ph'));
+      if(step>=0){const r=document.querySelector(`.bg-row[data-step="${step}"]`);if(r)r.classList.add('ph')}
     },40);
   }
   function stopPlayhead(){if(phTimer){clearInterval(phTimer);phTimer=null}}
@@ -3043,11 +3129,74 @@ const Studio=(()=>{
     groove=.3+Math.random()*.5;
     render();
   }
+  function applyPitch(){voicePitch=Math.pow(2,voiceSemi/12)}
   function setVoiceFx(id){
-    voiceFx=id;
-    const f=VOICE_FX.find(x=>x.id===id);
-    voicePitch=f?f.rate:1;
-    render();
+    const f=VOICE_FX.find(x=>x.id===id);if(!f)return;
+    voiceFx=id;voiceSemi=f.semi;applyPitch();render();
+  }
+  function setVoiceSemi(v){
+    voiceSemi=Math.max(-12,Math.min(12,parseInt(v,10)||0));
+    const f=VOICE_FX.find(x=>x.semi===voiceSemi);
+    voiceFx=f?f.id:'';                       // dragging off a preset deselects it
+    applyPitch();
+    const lab=document.querySelector('#stVoicePitchVal');
+    if(lab)lab.textContent=(voiceSemi>0?'+':'')+voiceSemi;
+    document.querySelectorAll('.st-fx').forEach(b=>
+      b.classList.toggle('sel',b.dataset.fx===voiceFx));
+  }
+  function setVoiceLevel(v){
+    voiceLevel=Math.max(0,Math.min(1,(parseInt(v,10)||0)/100));
+    const lab=document.querySelector('#stVoiceLevelVal');
+    if(lab)lab.textContent=Math.round(voiceLevel*100)+'%';
+  }
+
+  // Accept a buffer from any of the three sources through one door, so there is
+  // exactly one place that decides what "a voice is loaded" means.
+  function useBuffer(buf,name){
+    voiceBuf=buf;voiceOrig=buf;voiceName=name||'My voice';
+    on.voice=true;libOpen=false;
+    UI.showToast(voiceName+' loaded — press Play');
+    if(!playing)start();else render();
+  }
+  function pickFromLibrary(id){
+    const buf=AppState.decodedBuffers.get(id);
+    const meta=AppState.sounds.find(x=>x.id===id);
+    if(!buf){UI.showToast('That sound is still loading');return}
+    useBuffer(buf,meta?meta.name:'Sound');
+  }
+  function toggleLibrary(){libOpen=!libOpen;render()}
+  async function uploadVoice(file){
+    if(!file)return;
+    try{
+      const buf=await AudioProcessing.decodeFile(file);
+      useBuffer(buf,file.name.replace(/\.[^/.]+$/,''));
+    }catch(e){UI.showToast('Could not read that file')}
+  }
+  function voiceFxBuffer(kind){
+    if(!voiceBuf)return;
+    try{
+      voiceBuf=kind==='reverse'?SoundFX.reverseBuffer(voiceBuf):SoundFX.echoBuffer(voiceBuf);
+      UI.showToast(kind==='reverse'?'Reversed':'Echo added');render();
+    }catch(e){UI.showToast('Could not apply that')}
+  }
+  function undoVoiceFx(){
+    if(!voiceOrig)return;
+    voiceBuf=voiceOrig;voiceSemi=0;voiceFx='normal';applyPitch();
+    UI.showToast('Back to the original');render();
+  }
+  // Saving pushes the voice into the soundboard, where it becomes an ordinary
+  // sound: it gets a pad, it survives a reload, and it can be picked again
+  // from My Sounds later.
+  async function saveVoice(){
+    if(!voiceBuf){UI.showToast('Nothing to save yet');return}
+    try{
+      const blob=AudioProcessing.encodeWAV(voiceBuf);
+      await Recorder.saveSoundQuick(voiceName||'Studio voice',blob);
+    }catch(e){UI.showToast('Could not save — storage unavailable')}
+  }
+  function clearVoiceAndRecord(){
+    voiceBuf=null;voiceOrig=null;voiceName='';on.voice=false;
+    render();record();
   }
 
   // ── voice recording: two bars, then it loops with the band ──
@@ -3063,10 +3212,8 @@ const Studio=(()=>{
         recording=false;
         try{
           const blob=new Blob(chunks,{type:'audio/webm'});
-          voiceBuf=await AudioProcessing.decodeFile(new File([blob],'v.webm',{type:'audio/webm'}));
-          on.voice=true;
-          UI.showToast('Voice added — press Play');
-          if(!playing)start();else render();
+          const buf=await AudioProcessing.decodeFile(new File([blob],'v.webm',{type:'audio/webm'}));
+          useBuffer(buf,'My voice');
         }catch(e){UI.showToast('Could not use that recording');render()}
       };
       mr.start();
@@ -3077,13 +3224,17 @@ const Studio=(()=>{
       UI.showToast(e.name==='NotAllowedError'?'Mic blocked — allow microphone access':'Mic error');
     }
   }
-  function clearVoice(){voiceBuf=null;on.voice=false;render()}
+  function clearVoice(){voiceBuf=null;voiceOrig=null;voiceName='';on.voice=false;render()}
 
   function open(){loadBeats();render();}
   return{open,render,setStyle,setVariation,setSpeed,setGroove,togglePart,dice,setVoiceFx,
          tapCell,resetBeat,clearBeat,closeBeat,loadBeats,loadRecipe,_recipes:RECIPES,
+         setVoiceSemi,setVoiceLevel,pickFromLibrary,toggleLibrary,uploadVoice,_hasVoice:()=>!!voiceBuf,
+         voiceFxBuffer,undoVoiceFx,saveVoice,clearVoiceAndRecord,_voiceFx:VOICE_FX,
          record,clearVoice,toggle,start,stop,isPlaying:()=>playing,_styles:STYLES,
-         _state:()=>({styleIdx,variation,groove,speed,on:{...on},bpm:bpm(),swing:style().swing,hasVoice:!!voiceBuf})};
+         _state:()=>({styleIdx,variation,groove,speed,on:{...on},bpm:bpm(),swing:style().swing,
+           hasVoice:!!voiceBuf,voiceRate:voicePitch,voiceSemi,voiceLevel,recording,
+           voiceDur:voiceBuf?voiceBuf.duration:0,voiceName})};
 })();
 
 // ═══ UI ═══
@@ -3328,6 +3479,12 @@ function setupEvents(){
   document.querySelectorAll('.vs-btn').forEach(b=>b.addEventListener('click',()=>SongBuilder.setView(b.dataset.view)));
   // ── Studio (kid music maker) ──
   const sv=document.getElementById('studioView');
+  if(!document.getElementById('stVoiceFile')){
+    const fi=document.createElement('input');
+    fi.type='file';fi.id='stVoiceFile';fi.accept='audio/*';fi.style.display='none';
+    fi.addEventListener('change',()=>{const f=fi.files&&fi.files[0];fi.value='';Studio.uploadVoice(f)});
+    document.body.appendChild(fi);
+  }
   sv.addEventListener('click',e=>{
     const chip=e.target.closest('.st-chip');   if(chip){Studio.setStyle(+chip.dataset.style);return}
     const v=e.target.closest('.st-var');       if(v){Studio.setVariation(v.dataset.var==='mine'?'mine':+v.dataset.var);return}
@@ -3338,13 +3495,61 @@ function setupEvents(){
     if(e.target.closest('#bbClose')){Studio.closeBeat();return}
     const part=e.target.closest('.st-part');   if(part){Studio.togglePart(part.dataset.part);return}
     const fx=e.target.closest('.st-fx');       if(fx){Studio.setVoiceFx(fx.dataset.fx);return}
+    const src=e.target.closest('.sv-src');     if(src){
+      const k=src.dataset.src;
+      if(k==='rec')Studio.record();
+      else if(k==='lib')Studio.toggleLibrary();
+      else document.getElementById('stVoiceFile').click();
+      return}
+    const li=e.target.closest('.sv-libitem');  if(li){Studio.pickFromLibrary(li.dataset.lib);return}
+    if(e.target.closest('#stVoiceRev')){Studio.voiceFxBuffer('reverse');return}
+    if(e.target.closest('#stVoiceEcho')){Studio.voiceFxBuffer('echo');return}
+    if(e.target.closest('#stVoiceUndo')){Studio.undoVoiceFx();return}
+    if(e.target.closest('#stVoiceSave')){Studio.saveVoice();return}
+    if(e.target.closest('#stVoiceClear')){Studio.clearVoice();return}
     if(e.target.closest('#stPlay')){Studio.toggle();return}
     if(e.target.closest('#stDice')){Studio.dice();return}
     if(e.target.closest('#stRecBtn')){Studio.record();return}
   });
+  // Press and hold the My Voice tile for three seconds to throw the recording
+  // away and start a fresh one. A tap still toggles the part - the hold has to
+  // complete, and it shows a filling bar the whole time so nobody triggers it
+  // by accident or wonders whether it is working.
+  (function(){
+    let holdTimer=null,holdEl=null,fired=false,sx=0,sy=0;
+    const HOLD=3000;
+    const cancel=()=>{
+      if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
+      if(holdEl){holdEl.classList.remove('holding');holdEl=null}
+    };
+    sv.addEventListener('pointerdown',e=>{
+      const tile=e.target.closest('.st-part[data-part="voice"]');
+      if(!tile||!Studio._hasVoice())return;
+      fired=false;sx=e.clientX;sy=e.clientY;holdEl=tile;tile.classList.add('holding');
+      holdTimer=setTimeout(()=>{
+        fired=true;cancel();
+        if(navigator.vibrate)try{navigator.vibrate(40)}catch(x){}
+        Studio.clearVoiceAndRecord();
+      },HOLD);
+    });
+    sv.addEventListener('pointermove',e=>{
+      if(holdTimer&&(Math.abs(e.clientX-sx)>12||Math.abs(e.clientY-sy)>12))cancel();
+    });
+    sv.addEventListener('pointerup',cancel);
+    sv.addEventListener('pointercancel',cancel);
+    // Swallow the click that follows a completed hold so it does not also toggle.
+    sv.addEventListener('click',e=>{
+      if(fired&&e.target.closest('.st-part[data-part="voice"]')){
+        fired=false;e.stopPropagation();e.preventDefault();
+      }
+    },true);
+  })();
+
   sv.addEventListener('input',e=>{
     if(e.target.id==='stSpeed') Studio.setSpeed(e.target.value);
     if(e.target.id==='stGroove')Studio.setGroove(e.target.value);
+    if(e.target.id==='stVoicePitch')Studio.setVoiceSemi(e.target.value);
+    if(e.target.id==='stVoiceLevel')Studio.setVoiceLevel(e.target.value);
   });
   document.getElementById('easySlots').addEventListener('click',e=>{const sl=e.target.closest('.easy-slot');if(sl)SongBuilder.clearSlot(+sl.dataset.slot)});
   document.getElementById('easyTray').addEventListener('click',e=>{const t=e.target.closest('.tray-item');if(t)SongBuilder.dropSound(t.dataset.id)});
