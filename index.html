@@ -277,6 +277,14 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .song-howto{background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.7;color:var(--text2);margin-bottom:10px}
 .song-howto b{color:var(--text)}
 .song-starter{width:100%;justify-content:center;margin-bottom:10px;background:var(--accent2);color:#000}
+.sl-extra{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--surface3)}
+.pv-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pv-lab{font-size:10px;font-weight:700;color:var(--text2);width:38px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
+.pv-slider{flex:1;height:5px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none;border:none;padding:0}
+.pv-slider::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--accent3);cursor:pointer}
+.pv-slider::-moz-range-thumb{width:17px;height:17px;border:none;border-radius:50%;background:var(--accent3);cursor:pointer}
+.pv-val{font-size:10px;font-weight:700;color:var(--accent2);width:42px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+.pv-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .song-layers{display:flex;flex-direction:column;gap:8px}
 .song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
@@ -600,12 +608,34 @@ const AudioEngine=(()=>{let ctx=null;
   // at once. Starting sources against the Web Audio clock also keeps tracks
   // locked together - setTimeout chaining drifts and layers slide apart.
   let scheduled=[];
-  function playScheduled(id,vol,when){
+  // Accepts either a plain volume (legacy callers) or a shaping object:
+  //   {volume, pitch: semitones, tone: 0..1 lowpass openness, decay: 0..1 of length}
+  function playScheduled(id,volOrOpts,when){
     const buf=AppState.decodedBuffers.get(id);
     if(!buf)return null;
+    const o=(typeof volOrOpts==='number')?{volume:volOrOpts}:(volOrOpts||{});
+    const vol=o.volume==null?.8:o.volume;
     const c=getContext(),src=c.createBufferSource(),g=c.createGain();
-    src.buffer=buf;g.gain.value=vol;src.connect(g);g.connect(c.destination);
+    src.buffer=buf;
+    if(o.pitch)src.playbackRate.value=Math.pow(2,o.pitch/12);
+    let node=src;
+    if(o.tone!=null&&o.tone<1){                 // 1 = fully open, no filter cost
+      const f=c.createBiquadFilter();
+      f.type='lowpass';
+      f.frequency.value=Math.max(120,200*Math.pow(90,Math.max(0,o.tone)));
+      src.connect(f);node=f;
+    }
+    g.gain.value=vol;node.connect(g);g.connect(c.destination);
     try{src.start(when)}catch(e){return null}
+    if(o.decay!=null&&o.decay<1){               // shorten the tail
+      const natural=buf.duration/(src.playbackRate.value||1);
+      const len=Math.max(.03,natural*(.05+.95*Math.max(0,o.decay)));
+      try{
+        g.gain.setValueAtTime(vol,when);
+        g.gain.exponentialRampToValueAtTime(.0001,when+len);
+        src.stop(when+len+.02);
+      }catch(e){}
+    }
     scheduled.push(src);
     src.onended=()=>{const i=scheduled.indexOf(src);if(i>-1)scheduled.splice(i,1)};
     return src;
@@ -1503,6 +1533,9 @@ const SongBuilder=(()=>{
     song.layers.forEach(l=>{
       if(!l.type)l.type=l.steps?'chain':'grid';
       if(l.volume==null)l.volume=1;
+      if(l.pitch==null)l.pitch=0;      // semitones
+      if(l.tone==null)l.tone=1;        // 1 = fully open
+      if(l.decay==null)l.decay=1;      // 1 = full natural length
       if(l.type==='chain'&&!l.steps)l.steps=[];
       if(l.type==='grid'){
         const n=patLen(song);
@@ -1597,10 +1630,20 @@ const SongBuilder=(()=>{
         </div>
         ${body}
         ${sel?`<div class="sl-extra">
-          <span class="sl-vol-lab">Vol</span>
-          <input type="range" class="sl-vol" data-lid="${l.id}" min="0" max="100" value="${Math.round((l.volume==null?1:l.volume)*100)}">
-          ${l.type==='grid'?`<button class="sl-mini" data-act="clear" data-lid="${l.id}">Clear</button>`:''}
-          <button class="sl-mini" data-act="rename" data-lid="${l.id}">Rename</button>
+          ${[['volume','Vol',0,100,Math.round((l.volume==null?1:l.volume)*100)],
+             ['pitch','Pitch',-12,12,l.pitch||0],
+             ['tone','Tone',0,100,Math.round((l.tone==null?1:l.tone)*100)],
+             ['decay','Decay',2,100,Math.round((l.decay==null?1:l.decay)*100)]]
+            .map(([param,lab,mn,mx,val])=>`<div class="pv-row">
+               <span class="pv-lab">${lab}</span>
+               <input type="range" class="pv-slider" data-lid="${l.id}" data-param="${param}" min="${mn}" max="${mx}" value="${val}">
+               <span class="pv-val" data-lid="${l.id}" data-param="${param}">${paramLabel(param,l)}</span>
+             </div>`).join('')}
+          <div class="pv-actions">
+            ${l.type==='grid'?`<button class="sl-mini" data-act="clear" data-lid="${l.id}">Clear steps</button>`:''}
+            <button class="sl-mini" data-act="rename" data-lid="${l.id}">Rename</button>
+            <button class="sl-mini" data-act="reset" data-lid="${l.id}">Reset knobs</button>
+          </div>
         </div>`:''}
       </div>`;
     }).join('');
@@ -1649,10 +1692,8 @@ const SongBuilder=(()=>{
     l.pattern[i]=l.pattern[i]?0:1;
     const el=document.querySelector(`.cell[data-lid="${lid}"][data-i="${i}"]`);
     if(el)el.classList.toggle('on',!!l.pattern[i]);
-    if(l.pattern[i]&&l.soundId&&!AppState.songPlaying){
-      const snd=AppState.sounds.find(x=>x.id===l.soundId);
-      AudioEngine.playScheduled(l.soundId,((snd&&snd.volume!=null?snd.volume:80)/100)*(l.volume==null?1:l.volume),AudioEngine.getContext().currentTime+.01);
-    }
+    if(l.pattern[i]&&l.soundId&&!AppState.songPlaying)
+      AudioEngine.playScheduled(l.soundId,layerOpts(l,l.soundId),AudioEngine.getContext().currentTime+.01);
     await persist();
   }
   async function addLayer(type){
@@ -1678,9 +1719,29 @@ const SongBuilder=(()=>{
     else if(what==='rename'){const n=prompt('Layer name:',l.name);if(!n)return;l.name=n.trim()||l.name}
     await persist();renderLayers();renderSteps();
   }
-  async function setLayerVolume(lid,v){
+  async function setLayerParam(lid,param,v){
     const song=active();if(!song)return;const l=song.layers.find(x=>x.id===lid);if(!l)return;
-    l.volume=Math.max(0,Math.min(1,(parseInt(v,10)||0)/100));await persist();
+    const n=parseFloat(v);
+    if(param==='volume')l.volume=Math.max(0,Math.min(1,n/100));
+    else if(param==='pitch')l.pitch=Math.max(-12,Math.min(12,Math.round(n)));
+    else if(param==='tone')l.tone=Math.max(0,Math.min(1,n/100));
+    else if(param==='decay')l.decay=Math.max(.02,Math.min(1,n/100));
+    const lab=document.querySelector(`.pv-val[data-lid="${lid}"][data-param="${param}"]`);
+    if(lab)lab.textContent=paramLabel(param,l);
+    await persist();
+    // audition the change immediately so the slider is meaningful
+    const sid=l.type==='grid'?l.soundId:(l.steps[0]&&l.steps[0].soundId);
+    if(sid&&!AppState.songPlaying)AudioEngine.playScheduled(sid,layerOpts(l,sid),AudioEngine.getContext().currentTime+.01);
+  }
+  function paramLabel(param,l){
+    if(param==='volume')return Math.round((l.volume==null?1:l.volume)*100)+'%';
+    if(param==='pitch'){const p=l.pitch||0;return (p>0?'+':'')+p+' st'}
+    if(param==='tone')return (l.tone==null?1:l.tone)>=1?'open':Math.round((l.tone||0)*100)+'%';
+    return (l.decay==null?1:l.decay)>=1?'full':Math.round((l.decay||0)*100)+'%';
+  }
+  async function resetLayerParams(lid){
+    const song=active();if(!song)return;const l=song.layers.find(x=>x.id===lid);if(!l)return;
+    l.volume=1;l.pitch=0;l.tone=1;l.decay=1;await persist();renderLayers();
   }
   // Library tap: assign to a grid layer, or append a step to a chain layer
   async function addStep(soundId){
@@ -1731,7 +1792,7 @@ const SongBuilder=(()=>{
     const snd=AppState.sounds.find(x=>x.id===soundId);
     if(snd)l.name=snd.name;
     await persist();closePicker();renderLayers();
-    if(snd)AudioEngine.playScheduled(soundId,(snd.volume!=null?snd.volume:80)/100,AudioEngine.getContext().currentTime+.01);
+    if(snd)AudioEngine.playScheduled(soundId,layerOpts(l,soundId),AudioEngine.getContext().currentTime+.01);
   }
 
   // ── one-tap starter beat, so the grid is never a blank puzzle ──
@@ -1763,11 +1824,12 @@ const SongBuilder=(()=>{
     document.querySelectorAll('#songLayers .cell.ph').forEach(el=>el.classList.remove('ph'));
     document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.remove('playing-step'));
   }
-  function fire(soundId,layer,when){
+  function layerOpts(layer,soundId){
     const snd=AppState.sounds.find(x=>x.id===soundId);
-    const vol=((snd&&snd.volume!=null?snd.volume:80)/100)*(layer.volume==null?1:layer.volume);
-    AudioEngine.playScheduled(soundId,vol,when);
+    return{volume:((snd&&snd.volume!=null?snd.volume:80)/100)*(layer.volume==null?1:layer.volume),
+           pitch:layer.pitch||0, tone:layer.tone==null?1:layer.tone, decay:layer.decay==null?1:layer.decay};
   }
+  function fire(soundId,layer,when){AudioEngine.playScheduled(soundId,layerOpts(layer,soundId),when)}
   function scheduleCycle(song,base){
     const sd=stepDur(song),n=patLen(song);
     for(const l of song.layers){
@@ -1847,7 +1909,7 @@ const SongBuilder=(()=>{
     finish();UI.renderGrid();
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
-         addLayer,removeLayer,selectLayer,toggleLayer,setLayerVolume,setBpm,setBars,toggleCell,renderLibrary,
+         addLayer,removeLayer,selectLayer,toggleLayer,setLayerParam,resetLayerParams,setBpm,setBars,toggleCell,renderLibrary,
          openPicker,closePicker,pickSound,starterBeat};
 })();
 
@@ -2321,7 +2383,8 @@ function setupEvents(){
   document.getElementById('songBpm').addEventListener('input',e=>SongBuilder.setBpm(e.target.value));
   document.getElementById('songBars').addEventListener('change',e=>SongBuilder.setBars(e.target.value));
   document.getElementById('songLayers').addEventListener('input',e=>{
-    const v=e.target.closest('.sl-vol');if(v)SongBuilder.setLayerVolume(v.dataset.lid,v.target?v.target.value:v.value);
+    const sl=e.target.closest('.pv-slider');
+    if(sl)SongBuilder.setLayerParam(sl.dataset.lid,sl.dataset.param,sl.value);
   });
   document.getElementById('songLayers').addEventListener('click',e=>{
     const cell=e.target.closest('.cell');
@@ -2331,11 +2394,14 @@ function setupEvents(){
       if(chip.dataset.act==='pick')SongBuilder.openPicker(lid);else SongBuilder.toggleLayer(lid,'rename');
       SongBuilder.selectLayer(lid);return}
     const mini=e.target.closest('.sl-mini');
-    if(mini){SongBuilder.toggleLayer(mini.dataset.lid,mini.dataset.act);return}
+    if(mini){const a=mini.dataset.act;
+      if(a==='reset')SongBuilder.resetLayerParams(mini.dataset.lid);
+      else SongBuilder.toggleLayer(mini.dataset.lid,a);
+      return}
     const btn=e.target.closest('.sl-btn');
     if(btn){const act=btn.dataset.act,lid=btn.dataset.lid;
       if(act==='del')SongBuilder.removeLayer(lid);else SongBuilder.toggleLayer(lid,act);return}
-    if(e.target.closest('.sl-vol'))return;
+    if(e.target.closest('.pv-slider'))return;
     const row=e.target.closest('.song-layer');
     if(row)SongBuilder.selectLayer(row.dataset.lid);
   });
