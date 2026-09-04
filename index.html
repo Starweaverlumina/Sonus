@@ -257,32 +257,35 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .sl-head{display:flex;align-items:center;gap:8px}
 .sl-icon{font-size:18px;flex-shrink:0}
 .chain-note{font-size:11px;color:var(--text2);padding:6px 2px 0}
-.grid-row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin-top:8px}
-.grid-row .cell{height:30px;border-radius:6px;border:1.5px solid var(--surface3);background:var(--surface);cursor:pointer;padding:0;transition:background .08s,transform .08s}
+.grid-row{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:9px}
+.grid-row .cell{height:40px;border-radius:8px;border:1.5px solid var(--surface3);background:var(--surface);cursor:pointer;padding:0;transition:background .08s,transform .08s;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;color:var(--surface3)}
+.grid-row .cell.beat{color:var(--text2)}
+.grid-row .cell.on{color:#06231a}
+.grid-row .cell:active{transform:scale(.9)}
 .grid-row .cell.beat{border-color:#3a3a55}
 .grid-row .cell.on{background:var(--accent2);border-color:var(--accent2)}
 .grid-row .cell.ph{outline:2px solid var(--accent4);outline-offset:-2px}
 .grid-row .cell:active{transform:scale(.88)}
-.sl-extra{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--surface3)}
+
 .sl-vol-lab{font-size:11px;color:var(--text2);font-weight:700}
 .sl-vol{flex:1;height:5px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none}
 .sl-vol::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent3);cursor:pointer}
-.sl-mini{background:var(--surface3);color:var(--text);border:none;border-radius:8px;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer}
-.sl-chip{display:flex;align-items:center;gap:7px;flex:1;min-width:0;background:var(--surface3);border:1.5px solid transparent;border-radius:10px;padding:6px 10px;cursor:pointer;text-align:left}
+.sl-mini{flex:1;min-height:44px;background:var(--surface3);color:var(--text);border:none;border-radius:10px;font-size:12px;font-weight:700;padding:6px 8px;cursor:pointer}
+.sl-chip{display:flex;align-items:center;gap:7px;flex:1;min-width:0;min-height:44px;background:var(--surface3);border:1.5px solid transparent;border-radius:10px;padding:6px 10px;cursor:pointer;text-align:left}
 .sl-chip.empty{border-color:var(--accent4);border-style:dashed;background:rgba(255,170,0,.08)}
 .sl-chip .chip-name{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sl-chip .chip-hint{font-size:10px;color:var(--text2);flex-shrink:0}
-.grid-nums{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin-top:8px}
+.grid-nums{display:none}
 .grid-nums span{font-size:9px;color:var(--text2);text-align:center;font-weight:700}
 .song-howto{background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.7;color:var(--text2);margin-bottom:10px}
 .song-howto b{color:var(--text)}
 .song-starter{width:100%;justify-content:center;margin-bottom:10px;background:var(--accent2);color:#000}
 .sl-extra{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--surface3)}
-.pv-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pv-row{display:flex;align-items:center;gap:8px;margin-bottom:2px;min-height:44px}
 .pv-lab{font-size:10px;font-weight:700;color:var(--text2);width:38px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
-.pv-slider{flex:1;height:5px;-webkit-appearance:none;background:var(--surface3);border-radius:3px;outline:none;border:none;padding:0}
-.pv-slider::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--accent3);cursor:pointer}
-.pv-slider::-moz-range-thumb{width:17px;height:17px;border:none;border-radius:50%;background:var(--accent3);cursor:pointer}
+.pv-slider{flex:1;min-width:0;height:34px;-webkit-appearance:none;background:linear-gradient(var(--surface3),var(--surface3)) center/100% 6px no-repeat;border-radius:3px;outline:none;border:none;padding:0}
+.pv-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent3);cursor:pointer;border:2px solid var(--surface2)}
+.pv-slider::-moz-range-thumb{width:26px;height:26px;border:2px solid var(--surface2);border-radius:50%;background:var(--accent3);cursor:pointer}
 .pv-val{font-size:10px;font-weight:700;color:var(--accent2);width:42px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
 .pv-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .song-viewswitch{display:flex;gap:6px;padding:4px 0 12px}
@@ -408,11 +411,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .st-beat.pulse{animation:beatPulse .3s ease-out;color:var(--accent2)}
 @keyframes beatPulse{0%{transform:scale(1.35)}100%{transform:scale(1)}}
 .song-layers{display:flex;flex-direction:column;gap:8px}
-.song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
+.song-layer{display:flex;flex-direction:column;align-items:stretch;gap:0;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
 .song-layer .sl-name{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .song-layer .sl-count{font-size:11px;color:var(--text2);background:var(--surface3);border-radius:20px;padding:2px 8px}
-.song-layer .sl-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface3);color:var(--text);font-size:13px;cursor:pointer;flex-shrink:0}
+.song-layer .sl-btn{width:42px;height:42px;border-radius:10px;border:none;background:var(--surface3);color:var(--text);font-size:16px;cursor:pointer;flex-shrink:0}
 .song-layer .sl-btn.on{background:var(--accent3);color:#fff}
 .song-layer .sl-btn.off{opacity:.45}
 .song-layer .sl-btn.del{background:rgba(255,61,113,.15);color:var(--accent)}
@@ -1750,9 +1753,11 @@ const SongBuilder=(()=>{
       const snd=l.soundId?AppState.sounds.find(x=>x.id===l.soundId):null;
       let body;
       if(l.type==='grid'){
-        const nums=l.pattern.map((_,i)=>`<span>${i%4===0?(i/4+1):''}</span>`).join('');
-        body=`<div class="grid-nums">${nums}</div><div class="grid-row" data-lid="${l.id}">`+l.pattern.map((on,i)=>
-          `<button class="cell ${on?'on':''} ${i%4===0?'beat':''}" data-lid="${l.id}" data-i="${i}"></button>`).join('')+`</div>`;
+        // The beat number sits inside the cell that starts the beat, so the
+        // labels cannot drift out of line when the row wraps.
+        body=`<div class="grid-row" data-lid="${l.id}">`+l.pattern.map((on,i)=>
+          `<button class="cell ${on?'on':''} ${i%4===0?'beat':''}" data-lid="${l.id}" data-i="${i}"
+            >${i%4===0?(i/4+1):''}</button>`).join('')+`</div>`;
       }else{
         body=`<div class="chain-note">${l.steps.length} step${l.steps.length===1?'':'s'} — tap this track to edit its list below</div>`;
       }
