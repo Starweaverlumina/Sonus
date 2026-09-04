@@ -295,6 +295,31 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .easy-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .easy-slot{aspect-ratio:1;border-radius:14px;border:2px dashed var(--surface3);background:var(--surface2);color:var(--text2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:4px;overflow:hidden;transition:transform .1s}
 .easy-slot:active{transform:scale(.93)}
+.easy-slot{position:relative;overflow:hidden}
+.easy-slot::after{content:'';position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--accent4);border-radius:0 3px 3px 0}
+.easy-slot.holding::after{width:100%;transition:width 3s linear}
+.easy-slot.holding{outline:2px solid var(--accent4);outline-offset:-2px}
+.easy-slot.warped .es-rhythm::before{content:'✨ '}
+.ss-modal{max-height:88vh;display:flex;flex-direction:column}
+.ss-body{overflow-y:auto;flex:1;min-height:0;padding-right:2px}
+.ss-sect{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin:14px 0 7px}
+.ss-sect:first-child{margin-top:4px}
+.ss-rhys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ss-rhy{min-height:44px;border-radius:10px;border:2px solid var(--surface3);background:var(--surface2);
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer}
+.ss-rhy.sel{border-color:var(--accent2);color:var(--accent2);background:rgba(0,229,160,.1)}
+.ss-warps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ss-warp{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;
+  border-radius:11px;border:2px solid var(--surface3);background:var(--surface2);color:var(--text2);
+  font-size:19px;cursor:pointer;padding:4px 2px}
+.ss-warp i{font-style:normal;font-size:8px;font-weight:800;letter-spacing:.2px}
+.ss-warp.sel{border-color:var(--accent);color:var(--accent);background:rgba(255,61,113,.1)}
+.ss-rhy:active,.ss-warp:active{transform:scale(.94)}
+.ss-slider{flex:1;min-width:0;height:34px;-webkit-appearance:none;background:linear-gradient(var(--surface3),var(--surface3)) center/100% 6px no-repeat;border-radius:3px;outline:none;border:none;padding:0}
+.ss-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent3);cursor:pointer;border:2px solid var(--surface)}
+.ss-slider::-moz-range-thumb{width:26px;height:26px;border:2px solid var(--surface);border-radius:50%;background:var(--accent3);cursor:pointer}
+.ss-acts{display:flex;gap:6px;margin-top:16px}
+.ss-del{background:rgba(255,61,113,.15)!important;color:var(--accent)!important}
 .easy-slot .es-icon{font-size:22px}
 .easy-slot .es-name{font-size:9px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .easy-slot .es-rhythm{font-size:8px;text-transform:uppercase;letter-spacing:.5px;opacity:.75}
@@ -654,6 +679,14 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="modal-actions"><button class="cancel-btn" id="soundPickClose">Cancel</button></div>
   </div></div>
 
+  <!-- SLOT WORKSHOP: hold a slot for three seconds -->
+  <div class="modal-overlay" id="slotSheet"><div class="modal ss-modal">
+    <h2 id="slotSheetTitle">Slot</h2>
+    <div class="modal-sub">Hold any slot for 3 seconds to open this.</div>
+    <div id="slotSheetBody" class="ss-body"></div>
+    <div class="modal-actions"><button class="cancel-btn" id="slotSheetClose">Done</button></div>
+  </div></div>
+
   <!-- NOTE EDITOR -->
   <div class="modal-overlay" id="noteModal"><div class="modal">
     <h2 id="noteModalTitle">New Note</h2>
@@ -757,9 +790,11 @@ const AudioEngine=(()=>{let ctx=null;
   // Accepts either a plain volume (legacy callers) or a shaping object:
   //   {volume, pitch: semitones, tone: 0..1 lowpass openness, decay: 0..1 of length}
   function playScheduled(id,volOrOpts,when){
-    const buf=AppState.decodedBuffers.get(id);
-    if(!buf)return null;
     const o=(typeof volOrOpts==='number')?{volume:volOrOpts}:(volOrOpts||{});
+    // A caller may hand us its own buffer - a warped copy - instead of the
+    // shared one, so warping a track never alters the pad it came from.
+    const buf=o.buffer||AppState.decodedBuffers.get(id);
+    if(!buf)return null;
     const vol=o.volume==null?.8:o.volume;
     const c=getContext(),src=c.createBufferSource(),g=c.createGain();
     src.buffer=buf;
@@ -1468,7 +1503,55 @@ const SoundFX=(()=>{
     AppState.sounds.push(meta);UI.renderBanks();UI.renderCategories();UI.renderGrid();
     UI.showToast(`Saved "${meta.name}"`);
   }
-  return{reverseBuffer,echoBuffer,applyAndSave};
+  // Warps rewrite the samples themselves. Each takes a buffer and returns a
+  // new one - nothing is ever done in place, because the source buffer is
+  // shared with the pad grid.
+  function wobbleBuffer(buf,rateHz=5.5,depth=.22){
+    // Read through the source at a speed that wavers, which is what gives a
+    // tape-warble its seasick pitch.
+    const ctx=AudioEngine.getContext(),out=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    for(let c=0;c<buf.numberOfChannels;c++){
+      const src=buf.getChannelData(c),dst=out.getChannelData(c);
+      let pos=0;
+      for(let i=0;i<dst.length;i++){
+        const rate=1+depth*Math.sin(2*Math.PI*rateHz*i/buf.sampleRate);
+        const i0=Math.floor(pos),f=pos-i0;
+        dst[i]=i0+1<src.length?src[i0]*(1-f)+src[i0+1]*f:(src[i0]||0);
+        pos+=rate; if(pos>=src.length-1)pos=src.length-1;
+      }
+    }
+    return out;
+  }
+  function stutterBuffer(buf,slices=8){
+    // Take the opening slice and repeat it for the whole length.
+    const ctx=AudioEngine.getContext(),out=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    const len=Math.max(1,Math.floor(buf.length/slices));
+    for(let c=0;c<buf.numberOfChannels;c++){
+      const src=buf.getChannelData(c),dst=out.getChannelData(c);
+      for(let i=0;i<dst.length;i++){
+        const j=i%len;
+        // a short taper on each repeat, or every loop point clicks
+        const fade=Math.min(1,(len-j)/Math.max(1,len*.06),(j+1)/Math.max(1,len*.02));
+        dst[i]=(src[j]||0)*fade;
+      }
+    }
+    return out;
+  }
+  function crushBuffer(buf,bits=5,hold=5){
+    // Quantise the level and hold each sample - the classic 8-bit toy sound.
+    const ctx=AudioEngine.getContext(),out=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    const steps=Math.pow(2,bits)/2;
+    for(let c=0;c<buf.numberOfChannels;c++){
+      const src=buf.getChannelData(c),dst=out.getChannelData(c);
+      let held=0;
+      for(let i=0;i<dst.length;i++){
+        if(i%hold===0)held=Math.round(src[i]*steps)/steps;
+        dst[i]=held;
+      }
+    }
+    return out;
+  }
+  return{reverseBuffer,echoBuffer,wobbleBuffer,stutterBuffer,crushBuffer,applyAndSave};
 })();
 
 // ═══ ★ TEXT TO SPEECH ═══
@@ -1939,7 +2022,8 @@ const SongBuilder=(()=>{
     box.innerHTML=SLOTS.map((sl,i)=>{
       const layer=song.layers.find(l=>l.slot===i&&l.soundId);
       const snd=layer?AppState.sounds.find(x=>x.id===layer.soundId):null;
-      return`<button class="easy-slot ${snd?'filled pad-'+sl.color:''}" data-slot="${i}">
+      const warped=layer&&(layer.warp||[]).length;
+      return`<button class="easy-slot ${snd?'filled pad-'+sl.color:''} ${warped?'warped':''}" data-slot="${i}">
         <span class="es-icon">${snd?snd.icon:'＋'}</span>
         <span class="es-name">${snd?esc(snd.name):'empty'}</span>
         <span class="es-rhythm">${sl.name}</span></button>`;
@@ -2010,6 +2094,93 @@ const SongBuilder=(()=>{
     },Math.max(0,(when-c.currentTime)*1000)));
   }
 
+  // ── per-slot workshop ──
+  // Opened by holding a slot for three seconds. Everything here belongs to
+  // this one tile: which rhythm it plays, how it sounds, and how its audio is
+  // warped. A tap still just removes the sound, so the simple path is intact.
+  let sheetSlot=null;
+  function slotLayer(i){
+    const song=active();if(!song)return null;
+    return song.layers.find(l=>l.slot===i&&l.soundId)||null;
+  }
+  function openSlotSheet(i){
+    const l=slotLayer(i);
+    if(!l){UI.showToast('Put a sound in this slot first');return}
+    sheetSlot=i;renderSlotSheet();
+    document.getElementById('slotSheet').classList.add('open');
+  }
+  function closeSlotSheet(){
+    sheetSlot=null;
+    document.getElementById('slotSheet').classList.remove('open');
+  }
+  function renderSlotSheet(){
+    if(sheetSlot==null)return;
+    const l=slotLayer(sheetSlot);const box=document.getElementById('slotSheetBody');
+    if(!l||!box){closeSlotSheet();return}
+    const snd=AppState.sounds.find(x=>x.id===l.soundId);
+    document.getElementById('slotSheetTitle').textContent=(snd?snd.icon+' '+snd.name:'Slot '+(sheetSlot+1));
+    // which of the eight rhythms is this track currently playing?
+    const cur=SLOTS.findIndex(sl=>sl.cells.length===l.pattern.filter(Boolean).length
+      && sl.cells.every(c=>l.pattern[c]));
+    const rhythms=SLOTS.map((sl,i)=>
+      `<button class="ss-rhy ${i===cur?'sel':''}" data-rhy="${i}">${sl.name}</button>`).join('');
+    const warps=WARPS.map(w=>
+      `<button class="ss-warp ${(l.warp||[]).includes(w.id)?'sel':''}" data-warp="${w.id}">
+         <span>${w.icon}</span><i>${w.label}</i></button>`).join('');
+    const knobs=[['volume','Loud',0,100,Math.round((l.volume==null?1:l.volume)*100)],
+                 ['pitch','Pitch',-12,12,l.pitch||0],
+                 ['tone','Tone',0,100,Math.round((l.tone==null?1:l.tone)*100)],
+                 ['decay','Length',2,100,Math.round((l.decay==null?1:l.decay)*100)]]
+      .map(([param,lab,mn,mx,val])=>`<div class="pv-row">
+         <span class="pv-lab">${lab}</span>
+         <input type="range" class="ss-slider" data-param="${param}" min="${mn}" max="${mx}" value="${val}">
+         <span class="pv-val" data-ssval="${param}">${paramLabel(param,l)}</span></div>`).join('');
+    box.innerHTML=`
+      <div class="ss-sect">Rhythm — when it hits</div><div class="ss-rhys">${rhythms}</div>
+      <div class="ss-sect">Warp the sound</div><div class="ss-warps">${warps}</div>
+      <div class="ss-sect">Shape it</div>${knobs}
+      <div class="ss-acts">
+        <button class="sl-mini" id="ssHear">▶ Hear it</button>
+        <button class="sl-mini" id="ssReset">↺ Reset</button>
+        <button class="sl-mini ss-del" id="ssRemove">✕ Remove</button>
+      </div>`;
+  }
+  function hearSlot(){
+    const l=sheetSlot!=null&&slotLayer(sheetSlot);if(!l)return;
+    AudioEngine.playScheduled(l.soundId,layerOpts(l,l.soundId),AudioEngine.getContext().currentTime+.02);
+  }
+  async function setSlotRhythm(r){
+    const l=sheetSlot!=null&&slotLayer(sheetSlot);if(!l)return;
+    const sl=SLOTS[r];if(!sl)return;
+    l.pattern=Array.from({length:16},(_,i)=>sl.cells.includes(i)?1:0);
+    await persist();renderSlotSheet();renderEasy();renderLayers();
+  }
+  async function toggleWarp(id){
+    const l=sheetSlot!=null&&slotLayer(sheetSlot);if(!l)return;
+    const list=l.warp||[];
+    l.warp=list.includes(id)?list.filter(x=>x!==id):[...list,id];
+    await persist();renderSlotSheet();renderEasy();hearSlot();
+  }
+  function setSlotParam(param,v){
+    const l=sheetSlot!=null&&slotLayer(sheetSlot);if(!l)return;
+    const n=parseInt(v,10)||0;
+    if(param==='pitch')l.pitch=Math.max(-12,Math.min(12,n));
+    else l[param]=Math.max(0,Math.min(100,n))/100;
+    const lab=document.querySelector(`[data-ssval="${param}"]`);
+    if(lab)lab.textContent=paramLabel(param,l);
+    clearTimeout(sheetSave);sheetSave=setTimeout(()=>persist(),350);
+  }
+  let sheetSave=null;
+  async function resetSlot(){
+    const l=sheetSlot!=null&&slotLayer(sheetSlot);if(!l)return;
+    l.volume=1;l.pitch=0;l.tone=1;l.decay=1;l.warp=[];
+    await persist();renderSlotSheet();renderEasy();renderLayers();UI.showToast('Back to normal');
+  }
+  async function removeSlot(){
+    const i=sheetSlot;closeSlotSheet();
+    if(i!=null)await clearSlot(i);
+  }
+
   // ── sound picker (opened from a track's chip) ──
   let pickingFor=null;
   function openPicker(lid){
@@ -2064,10 +2235,44 @@ const SongBuilder=(()=>{
     document.querySelectorAll('#songLayers .cell.ph').forEach(el=>el.classList.remove('ph'));
     document.querySelectorAll('#songStepsList .song-step').forEach(el=>el.classList.remove('playing-step'));
   }
+  // ── warps ──
+  // A layer stores its warps as a list of names, not as audio, so a song can
+  // be saved and reloaded and still sound the same. The rendered buffer is
+  // cached per sound+recipe, because warping is real sample maths and doing
+  // it on every hit would stutter the loop.
+  const WARPS=[
+    {id:'reverse', icon:'🔄', label:'Backwards'},
+    {id:'echo',    icon:'🌊', label:'Echo'},
+    {id:'wobble',  icon:'🥴', label:'Wobble'},
+    {id:'stutter', icon:'⚡', label:'Stutter'},
+    {id:'crush',   icon:'🤖', label:'Crunchy'},
+  ];
+  const warpCache=new Map();
+  function warpedBuffer(layer){
+    const list=layer.warp||[];
+    if(!list.length)return null;
+    const key=layer.soundId+'|'+list.join(',');
+    if(warpCache.has(key))return warpCache.get(key);
+    let buf=AppState.decodedBuffers.get(layer.soundId);
+    if(!buf)return null;
+    try{
+      for(const w of list){
+        if(w==='reverse')buf=SoundFX.reverseBuffer(buf);
+        else if(w==='echo')buf=SoundFX.echoBuffer(buf);
+        else if(w==='wobble')buf=SoundFX.wobbleBuffer(buf);
+        else if(w==='stutter')buf=SoundFX.stutterBuffer(buf);
+        else if(w==='crush')buf=SoundFX.crushBuffer(buf);
+      }
+    }catch(e){return null}
+    warpCache.set(key,buf);
+    return buf;
+  }
   function layerOpts(layer,soundId){
     const snd=AppState.sounds.find(x=>x.id===soundId);
+    const wb=warpedBuffer(layer);
     return{volume:((snd&&snd.volume!=null?snd.volume:80)/100)*(layer.volume==null?1:layer.volume),
-           pitch:layer.pitch||0, tone:layer.tone==null?1:layer.tone, decay:layer.decay==null?1:layer.decay};
+           pitch:layer.pitch||0, tone:layer.tone==null?1:layer.tone, decay:layer.decay==null?1:layer.decay,
+           ...(wb?{buffer:wb}:{})};
   }
   function fire(soundId,layer,when){AudioEngine.playScheduled(soundId,layerOpts(layer,soundId),when)}
   function scheduleCycle(song,base){
@@ -2151,7 +2356,9 @@ const SongBuilder=(()=>{
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
          addLayer,removeLayer,selectLayer,toggleLayer,setLayerParam,resetLayerParams,setBpm,setBars,toggleCell,renderLibrary,
-         openPicker,closePicker,pickSound,starterBeat,dropSound,clearSlot,clearAll,setView,applyView,renderEasy};
+         openPicker,closePicker,pickSound,starterBeat,dropSound,clearSlot,clearAll,setView,applyView,renderEasy,
+         openSlotSheet,closeSlotSheet,setSlotRhythm,toggleWarp,setSlotParam,resetSlot,removeSlot,hearSlot,
+         _warps:WARPS,_slots:SLOTS,_slotLayer:slotLayer,_sheetOpen:()=>sheetSlot};
 })();
 
 // ═══ MEME PACK ═══
@@ -3556,7 +3763,49 @@ function setupEvents(){
     if(e.target.id==='stVoicePitch')Studio.setVoiceSemi(e.target.value);
     if(e.target.id==='stVoiceLevel')Studio.setVoiceLevel(e.target.value);
   });
-  document.getElementById('easySlots').addEventListener('click',e=>{const sl=e.target.closest('.easy-slot');if(sl)SongBuilder.clearSlot(+sl.dataset.slot)});
+  // Tap a slot to free it; hold it for three seconds to open that slot's
+  // workshop. The bar filling across the tile is what tells a child the
+  // difference between the two, before either one happens.
+  (function(){
+    const slots=document.getElementById('easySlots');
+    let timer=null,el=null,fired=false,sx=0,sy=0;
+    const cancel=()=>{
+      if(timer){clearTimeout(timer);timer=null}
+      if(el){el.classList.remove('holding');el=null}
+    };
+    slots.addEventListener('pointerdown',e=>{
+      const sl=e.target.closest('.easy-slot');if(!sl)return;
+      if(!SongBuilder._slotLayer(+sl.dataset.slot))return;      // empty slot: nothing to open
+      fired=false;sx=e.clientX;sy=e.clientY;el=sl;sl.classList.add('holding');
+      timer=setTimeout(()=>{
+        fired=true;cancel();
+        if(navigator.vibrate)try{navigator.vibrate(40)}catch(x){}
+        SongBuilder.openSlotSheet(+sl.dataset.slot);
+      },3000);
+    });
+    slots.addEventListener('pointermove',e=>{
+      if(timer&&(Math.abs(e.clientX-sx)>12||Math.abs(e.clientY-sy)>12))cancel();
+    });
+    slots.addEventListener('pointerup',cancel);
+    slots.addEventListener('pointercancel',cancel);
+    slots.addEventListener('click',e=>{
+      const sl=e.target.closest('.easy-slot');if(!sl)return;
+      if(fired){fired=false;return}                            // the hold already acted
+      SongBuilder.clearSlot(+sl.dataset.slot);
+    });
+  })();
+  document.getElementById('slotSheetClose').addEventListener('click',()=>SongBuilder.closeSlotSheet());
+  document.getElementById('slotSheet').addEventListener('click',e=>{
+    if(e.target.id==='slotSheet'){SongBuilder.closeSlotSheet();return}
+    const r=e.target.closest('.ss-rhy');   if(r){SongBuilder.setSlotRhythm(+r.dataset.rhy);return}
+    const w=e.target.closest('.ss-warp');  if(w){SongBuilder.toggleWarp(w.dataset.warp);return}
+    if(e.target.closest('#ssHear')){SongBuilder.hearSlot();return}
+    if(e.target.closest('#ssReset')){SongBuilder.resetSlot();return}
+    if(e.target.closest('#ssRemove')){SongBuilder.removeSlot();return}
+  });
+  document.getElementById('slotSheet').addEventListener('input',e=>{
+    if(e.target.classList.contains('ss-slider'))SongBuilder.setSlotParam(e.target.dataset.param,e.target.value);
+  });
   document.getElementById('easyTray').addEventListener('click',e=>{const t=e.target.closest('.tray-item');if(t)SongBuilder.dropSound(t.dataset.id)});
   document.getElementById('easyPlayBtn').addEventListener('click',()=>SongBuilder.play());
   document.getElementById('easyClearBtn').addEventListener('click',()=>{if(confirm('Clear all slots?'))SongBuilder.clearAll()});
