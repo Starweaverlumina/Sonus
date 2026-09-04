@@ -285,6 +285,25 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .pv-slider::-moz-range-thumb{width:17px;height:17px;border:none;border-radius:50%;background:var(--accent3);cursor:pointer}
 .pv-val{font-size:10px;font-weight:700;color:var(--accent2);width:42px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
 .pv-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.song-viewswitch{display:flex;gap:6px;padding:4px 0 12px}
+.vs-btn{flex:1;padding:9px 0;border-radius:12px;border:1.5px solid var(--surface3);background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.vs-btn.active{background:var(--accent3);border-color:var(--accent3);color:#fff}
+.easy-hint{background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.6;color:var(--text2);margin-bottom:12px;text-align:center}
+.easy-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.easy-slot{aspect-ratio:1;border-radius:14px;border:2px dashed var(--surface3);background:var(--surface2);color:var(--text2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:4px;overflow:hidden;transition:transform .1s}
+.easy-slot:active{transform:scale(.93)}
+.easy-slot .es-icon{font-size:22px}
+.easy-slot .es-name{font-size:9px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.easy-slot .es-rhythm{font-size:8px;text-transform:uppercase;letter-spacing:.5px;opacity:.75}
+.easy-slot.filled{border-style:solid;border-color:transparent;color:#fff}
+.easy-slot.filled.beating{animation:slotPulse .25s ease-out}
+@keyframes slotPulse{0%{transform:scale(1.1);filter:brightness(1.5)}100%{transform:scale(1);filter:brightness(1)}}
+.easy-bar{display:flex;gap:8px;margin-bottom:14px}
+.easy-tray{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:12px}
+.tray-item{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:100px;padding:8px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.tray-item:active{transform:scale(.94);border-color:var(--accent2)}
+.tray-item.used{opacity:.4}
+.tray-item .ti-icon{font-size:15px}
 .song-layers{display:flex;flex-direction:column;gap:8px}
 .song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
@@ -343,6 +362,24 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       <input type="range" id="songBpm" min="40" max="200" step="1" value="100">
       <select id="songBars" title="Bars"><option value="1">1 bar</option><option value="2">2 bars</option></select>
     </div>
+    <div class="song-viewswitch">
+      <button class="vs-btn active" data-view="easy">🎚️ Easy</button>
+      <button class="vs-btn" data-view="advanced">🎛️ Advanced</button>
+    </div>
+
+    <!-- EASY MODE: tap a sound, it drops into a slot and loops in time -->
+    <div id="easyView">
+      <div class="easy-hint">Tap a sound below — it joins the loop instantly. Tap a slot to remove it.</div>
+      <div class="easy-slots" id="easySlots"></div>
+      <div class="easy-bar">
+        <button class="action-btn btn-record" id="easyPlayBtn" style="flex:1"><span>▶</span> Play</button>
+        <button class="icon-btn" id="easyClearBtn" title="Clear all">🗑️</button>
+      </div>
+      <div class="song-section-label">Sounds</div>
+      <div class="easy-tray" id="easyTray"></div>
+    </div>
+
+    <div id="advancedView" style="display:none">
     <div class="song-howto">
       <b>1.</b> Tap a track's sound button to choose a sound &nbsp;
       <b>2.</b> Tap the squares to place hits on the beat &nbsp;
@@ -361,6 +398,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     </div>
     <div class="song-section-label" id="songLibHint">Tap a sound to add it</div>
     <div class="song-lib-list" id="songLibList"></div>
+    </div>
   </div>
 
   <div class="bottom-bar" id="bottomBar">
@@ -554,7 +592,7 @@ const CONFIG=Object.freeze({DB_NAME:'SoundDeckDB',DB_VERSION:4,STORE_META:'metad
   PAD_COLORS:[{name:'red',swatch:'#ff3d71'},{name:'green',swatch:'#00e5a0'},{name:'purple',swatch:'#7b61ff'},{name:'orange',swatch:'#ffaa00'},{name:'blue',swatch:'#3d9eff'},{name:'pink',swatch:'#ff61a6'},{name:'teal',swatch:'#00d4c8'},{name:'yellow',swatch:'#ffe144'}],
   DEFAULT_ICONS:['🔊','📯','🎵','🥁','👏','💥','😂','🔔','🎤','🎸','🎹','🐱','🐶','💀','🚨','🎉'],
   WORD_NUMBERS:{'one':1,'won':1,'two':2,'too':2,'to':2,'three':3,'free':3,'tree':3,'four':4,'for':4,'five':5,'six':6,'seven':7,'eight':8,'ate':8,'nine':9,'ten':10,'eleven':11,'twelve':12}});
-const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false,mode:'pads',songPlaying:false};
+const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false,mode:'pads',songPlaying:false,songView:'easy'};
 
 // ═══ STORAGE ═══
 const Storage=(()=>{let db=null;
@@ -1569,7 +1607,7 @@ const SongBuilder=(()=>{
     if(s&&(!activeLayerId||!s.layers.some(l=>l.id===activeLayerId)))activeLayerId=s.layers[0]?s.layers[0].id:null;
     renderAll();
   }
-  function renderAll(){renderSelect();renderTransport();renderLayers();renderSteps();renderLibrary();updateControls()}
+  function renderAll(){renderSelect();renderTransport();renderLayers();renderSteps();renderLibrary();updateControls();renderEasy()}
 
   async function create(name,silent){
     const song=normalise({id:uid(),name:name||`Song ${songs.length+1}`,bpm:100,bars:1,loop:true,
@@ -1770,6 +1808,90 @@ const SongBuilder=(()=>{
   }
   function toggleLoop(){const s=active();if(!s)return;s.loop=!s.loop;persist();updateControls()}
 
+  // ── EASY MODE ──
+  // The slot owns the rhythm, the sound owns the timbre. Anything dropped into
+  // a slot inherits that slot's pattern, so a beginner cannot place a hit
+  // off-grid or build something that fights the tempo.
+  const SLOTS=[
+    {name:'Beat',    cells:[0,4,8,12],                    color:'red'},
+    {name:'Backbeat',cells:[4,12],                        color:'blue'},
+    {name:'Offbeat', cells:[2,6,10,14],                   color:'teal'},
+    {name:'Eighths', cells:[0,2,4,6,8,10,12,14],          color:'green'},
+    {name:'Once',    cells:[0],                           color:'purple'},
+    {name:'Skip',    cells:[3,7,11,15],                   color:'orange'},
+    {name:'Fast',    cells:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], color:'pink'},
+    {name:'Half',    cells:[0,8],                         color:'yellow'},
+  ];
+
+  function renderEasy(){
+    const song=active(),box=document.getElementById('easySlots');if(!box)return;
+    if(!song){box.innerHTML='';return}
+    box.innerHTML=SLOTS.map((sl,i)=>{
+      const layer=song.layers.find(l=>l.slot===i&&l.soundId);
+      const snd=layer?AppState.sounds.find(x=>x.id===layer.soundId):null;
+      return`<button class="easy-slot ${snd?'filled pad-'+sl.color:''}" data-slot="${i}">
+        <span class="es-icon">${snd?snd.icon:'＋'}</span>
+        <span class="es-name">${snd?esc(snd.name):'empty'}</span>
+        <span class="es-rhythm">${sl.name}</span></button>`;
+    }).join('');
+    const tray=document.getElementById('easyTray');
+    if(tray){
+      const used=song.layers.filter(l=>l.soundId).map(l=>l.soundId);
+      const list=AppState.sounds.filter(x=>!x.tts);
+      tray.innerHTML=list.length
+        ?list.map(x=>`<button class="tray-item ${used.includes(x.id)?'used':''}" data-id="${x.id}"><span class="ti-icon">${x.icon}</span>${esc(x.name)}</button>`).join('')
+        :'<div class="lib-pick-empty">No sounds yet — add some on the Pads tab</div>';
+    }
+    const pb=document.getElementById('easyPlayBtn');
+    if(pb)pb.innerHTML=AppState.songPlaying?'<span>⏹</span> Stop':'<span>▶</span> Play';
+  }
+
+  // Tapping a sound drops it into the first free slot and it joins the loop
+  // at the next bar, so adding parts never interrupts what is already playing.
+  async function dropSound(soundId){
+    await ensureLoaded();
+    const song=active();if(!song)return;
+    let idx=SLOTS.findIndex((_,i)=>!song.layers.some(l=>l.slot===i&&l.soundId));
+    if(idx<0){UI.showToast('All slots full — tap one to free it');return}
+    const snd=AppState.sounds.find(x=>x.id===soundId);
+    const sl=SLOTS[idx];
+    // Drop the untouched placeholder track create() makes, so Easy mode does
+    // not leave a phantom empty track behind in Advanced view.
+    song.layers=song.layers.filter(l=>!(l.slot==null&&l.type==='grid'&&!l.soundId));
+    song.layers=song.layers.filter(l=>l.slot!==idx);
+    song.layers.push({id:uid(),name:snd?snd.name:sl.name,type:'grid',soundId,slot:idx,
+      pattern:Array.from({length:16},(_,i)=>sl.cells.includes(i)?1:0),
+      loop:true,muted:false,volume:1,pitch:0,tone:1,decay:1});
+    await persist();renderEasy();
+    if(!AppState.songPlaying)play();          // first sound starts the loop
+  }
+  async function clearSlot(i){
+    const song=active();if(!song)return;
+    if(!song.layers.some(l=>l.slot===i&&l.soundId))return;
+    song.layers=song.layers.filter(l=>l.slot!==i);
+    await persist();renderEasy();
+    if(!song.layers.some(l=>l.soundId))stop();   // nothing left to hear
+  }
+  async function clearAll(){
+    const song=active();if(!song)return;
+    stop();song.layers=[];await persist();renderEasy();renderLayers();
+  }
+  function setView(v){
+    AppState.songView=v;
+    document.querySelectorAll('.vs-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+    document.getElementById('easyView').style.display=v==='easy'?'':'none';
+    document.getElementById('advancedView').style.display=v==='advanced'?'':'none';
+    if(v==='easy')renderEasy();else renderAll();
+  }
+  // flash the slot whose sound just fired
+  function pulseSlot(slotIdx,when){
+    const c=AudioEngine.getContext();
+    hlTimers.push(setTimeout(()=>{
+      const el=document.querySelector(`.easy-slot[data-slot="${slotIdx}"]`);
+      if(!el)return;el.classList.remove('beating');void el.offsetWidth;el.classList.add('beating');
+    },Math.max(0,(when-c.currentTime)*1000)));
+  }
+
   // ── sound picker (opened from a track's chip) ──
   let pickingFor=null;
   function openPicker(lid){
@@ -1834,7 +1956,8 @@ const SongBuilder=(()=>{
     const sd=stepDur(song),n=patLen(song);
     for(const l of song.layers){
       if(l.type!=='grid'||l.muted||!l.soundId)continue;
-      for(let i=0;i<n;i++)if(l.pattern[i])fire(l.soundId,l,base+i*sd);
+      for(let i=0;i<n;i++)if(l.pattern[i]){fire(l.soundId,l,base+i*sd);
+        if(AppState.songView==='easy'&&l.slot!=null)pulseSlot(l.slot,base+i*sd)}
     }
   }
   function initChain(song,base){
@@ -1887,7 +2010,7 @@ const SongBuilder=(()=>{
       setTimeout(()=>{if(tok===playToken)finish()},wait);
     }
   }
-  function finish(){AppState.songPlaying=false;clearHighlights();updateControls()}
+  function finish(){AppState.songPlaying=false;clearHighlights();updateControls();renderEasy()}
 
   function play(){
     const song=active();
@@ -1900,7 +2023,7 @@ const SongBuilder=(()=>{
     startedAt=c.currentTime+.08;
     cycleNext=startedAt;cyclesDone=0;
     chainStates=initChain(song,startedAt);
-    AppState.songPlaying=true;updateControls();
+    AppState.songPlaying=true;updateControls();renderEasy();
     tick();clearInterval(timer);timer=setInterval(tick,TICK);
   }
   function stop(){
@@ -1910,7 +2033,7 @@ const SongBuilder=(()=>{
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
          addLayer,removeLayer,selectLayer,toggleLayer,setLayerParam,resetLayerParams,setBpm,setBars,toggleCell,renderLibrary,
-         openPicker,closePicker,pickSound,starterBeat};
+         openPicker,closePicker,pickSound,starterBeat,dropSound,clearSlot,clearAll,setView,renderEasy};
 })();
 
 // ═══ MEME PACK ═══
@@ -2374,6 +2497,11 @@ function setupEvents(){
   });
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
+  document.querySelectorAll('.vs-btn').forEach(b=>b.addEventListener('click',()=>SongBuilder.setView(b.dataset.view)));
+  document.getElementById('easySlots').addEventListener('click',e=>{const sl=e.target.closest('.easy-slot');if(sl)SongBuilder.clearSlot(+sl.dataset.slot)});
+  document.getElementById('easyTray').addEventListener('click',e=>{const t=e.target.closest('.tray-item');if(t)SongBuilder.dropSound(t.dataset.id)});
+  document.getElementById('easyPlayBtn').addEventListener('click',()=>SongBuilder.play());
+  document.getElementById('easyClearBtn').addEventListener('click',()=>{if(confirm('Clear all slots?'))SongBuilder.clearAll()});
   document.getElementById('songStarterBtn').addEventListener('click',()=>SongBuilder.starterBeat());
   document.getElementById('soundPickClose').addEventListener('click',()=>SongBuilder.closePicker());
   document.getElementById('soundPickModal').addEventListener('click',e=>{if(e.target===e.currentTarget)SongBuilder.closePicker()});
