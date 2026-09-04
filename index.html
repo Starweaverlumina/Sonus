@@ -304,6 +304,78 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .tray-item:active{transform:scale(.94);border-color:var(--accent2)}
 .tray-item.used{opacity:.4}
 .tray-item .ti-icon{font-size:15px}
+/* ═══ STUDIO ═══ */
+#studioView{padding-bottom:8px}
+.st-mine{border-style:dashed}
+.st-beatbox{background:var(--surface);border:2px solid var(--surface3);border-radius:var(--radius);padding:10px;margin:0 0 12px}
+.bb-head{font-size:11px;color:var(--text2);padding:0 0 8px 2px;font-weight:600}
+.bb-recs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0 0 12px}
+.bb-recs::-webkit-scrollbar{display:none}
+.bb-rec{flex-shrink:0;min-height:52px;padding:8px 14px;border-radius:12px;border:2px solid var(--surface3);
+  background:var(--surface2);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;
+  gap:2px;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.bb-rec b{font-size:13px;font-weight:800;color:var(--text)}
+.bb-rec i{font-style:normal;font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.2px}
+.bb-rec.sel{background:var(--accent2);border-color:var(--accent2)}
+.bb-rec.sel b,.bb-rec.sel i{color:#06231a}
+.bb-rec:active{transform:scale(.95)}
+.bb-scroll{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.bb-scroll::-webkit-scrollbar{display:none}
+.bl-row{display:flex;align-items:center;gap:3px;margin-bottom:3px;width:max-content}
+.bl-lab{position:sticky;left:0;z-index:2;flex-shrink:0;width:52px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--surface);font-size:15px;line-height:1.1}
+.bl-lab i{font-style:normal;font-size:8px;color:var(--text2);font-weight:700;letter-spacing:.3px}
+.bl-cell{flex-shrink:0;width:34px;height:34px;border-radius:8px;border:none;padding:0;cursor:pointer;
+  background:var(--surface3);transition:background .08s,transform .08s}
+.bl-cell.dw{background:var(--surface2);box-shadow:inset 2px 0 0 var(--surface3)}
+.bl-cell.v1{background:var(--accent3)}
+.bl-cell.v2{background:var(--accent);box-shadow:0 0 10px rgba(255,61,113,.55)}
+.bl-cell.ph{outline:2px solid var(--accent4);outline-offset:-2px}
+.bl-cell:active{transform:scale(.86)}
+.bl-ruler .bl-cell,.bl-num{width:34px;height:14px}
+.bl-num{flex-shrink:0;text-align:center;font-size:10px;font-weight:700;color:var(--surface3)}
+.bl-num.on{color:var(--text2)}
+.bb-foot{display:flex;gap:8px;padding-top:10px}
+.bb-btn{flex:1;min-height:44px;border-radius:10px;border:2px solid var(--surface3);background:var(--surface2);
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.bb-btn:active{transform:scale(.96)}
+.st-strip{position:relative}
+.st-strip::after{content:'';position:absolute;top:0;right:0;bottom:10px;width:28px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--bg))}
+.st-styles{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;scroll-behavior:smooth}
+.st-styles::-webkit-scrollbar{display:none}
+.st-chip{flex-shrink:0;min-height:52px;padding:14px 22px;border-radius:100px;border:2px solid var(--surface3);background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.st-chip.sel{background:var(--accent3);border-color:var(--accent3);color:#fff}
+.st-chip:active{transform:scale(.95)}
+.st-vars{display:flex;gap:6px;padding-bottom:12px;flex-wrap:wrap}
+.st-var{min-height:48px;padding:12px 20px;border-radius:100px;border:2px solid var(--surface3);background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.st-var.sel{border-color:var(--accent2);color:var(--accent2)}
+.st-slider{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.st-slider input[type=range]{flex:1;height:48px;-webkit-appearance:none;background:transparent;outline:none;margin:0}
+.st-slider input[type=range]::-webkit-slider-runnable-track{height:12px;background:var(--surface3);border-radius:6px}
+.st-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;border-radius:50%;background:var(--accent2);cursor:pointer;border:4px solid var(--bg);margin-top:-11px}
+.st-slider input[type=range]::-moz-range-track{height:12px;background:var(--surface3);border-radius:6px}
+.st-slider input[type=range]::-moz-range-thumb{width:34px;height:34px;border:4px solid var(--bg);border-radius:50%;background:var(--accent2);cursor:pointer}
+.st-slider .ss-lab{font-size:17px}
+.st-slider .ss-val{font-size:11px;color:var(--text2);font-weight:700;width:56px;text-align:right}
+.st-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.st-part{aspect-ratio:1;border-radius:18px;border:2.5px solid var(--surface3);background:var(--surface2);color:var(--text2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:transform .1s}
+.st-part:active{transform:scale(.93)}
+.st-part .sp-icon{font-size:30px}
+.st-part .sp-label{font-size:11px;font-weight:700}
+.st-part .sp-state{font-size:9px;text-transform:uppercase;letter-spacing:.5px;opacity:.7}
+.st-part.on{background:linear-gradient(135deg,var(--accent3),#4a30cc);border-color:var(--accent3);color:#fff}
+.st-part.on.beat{animation:partBeat .28s ease-out}
+@keyframes partBeat{0%{transform:scale(1.07);filter:brightness(1.45)}100%{transform:scale(1);filter:brightness(1)}}
+.st-voice{background:var(--surface2);border:1.5px solid var(--surface3);border-radius:14px;padding:12px;margin-bottom:12px}
+.st-voice .chop-btn{width:100%;justify-content:center;margin-bottom:10px}
+.st-fxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.st-fx{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;padding:8px 2px;border-radius:12px;border:2px solid var(--surface3);background:var(--surface2);color:var(--text2);font-size:20px;cursor:pointer}
+.st-fx span{font-size:8px;font-weight:700}
+.st-fx.sel{border-color:var(--accent4);color:var(--accent4)}
+.st-transport{display:flex;align-items:center;gap:10px}
+.st-beat{font-size:11px;font-weight:700;color:var(--text2);width:46px;text-align:center}
+.st-beat.pulse{animation:beatPulse .3s ease-out;color:var(--accent2)}
+@keyframes beatPulse{0%{transform:scale(1.35)}100%{transform:scale(1)}}
 .song-layers{display:flex;flex-direction:column;gap:8px}
 .song-layer{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;padding:9px 10px;cursor:pointer}
 .song-layer.sel{border-color:var(--accent3);background:rgba(123,97,255,.12)}
@@ -363,9 +435,11 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
       <select id="songBars" title="Bars"><option value="1">1 bar</option><option value="2">2 bars</option></select>
     </div>
     <div class="song-viewswitch">
-      <button class="vs-btn active" data-view="easy">🎚️ Easy</button>
+      <button class="vs-btn active" data-view="studio">🎵 Music</button>
+      <button class="vs-btn" data-view="easy">🎚️ Slots</button>
       <button class="vs-btn" data-view="advanced">🎛️ Advanced</button>
     </div>
+    <div id="studioView"></div>
 
     <!-- EASY MODE: tap a sound, it drops into a slot and loops in time -->
     <div id="easyView">
@@ -592,7 +666,7 @@ const CONFIG=Object.freeze({DB_NAME:'SoundDeckDB',DB_VERSION:4,STORE_META:'metad
   PAD_COLORS:[{name:'red',swatch:'#ff3d71'},{name:'green',swatch:'#00e5a0'},{name:'purple',swatch:'#7b61ff'},{name:'orange',swatch:'#ffaa00'},{name:'blue',swatch:'#3d9eff'},{name:'pink',swatch:'#ff61a6'},{name:'teal',swatch:'#00d4c8'},{name:'yellow',swatch:'#ffe144'}],
   DEFAULT_ICONS:['🔊','📯','🎵','🥁','👏','💥','😂','🔔','🎤','🎸','🎹','🐱','🐶','💀','🚨','🎉'],
   WORD_NUMBERS:{'one':1,'won':1,'two':2,'too':2,'to':2,'three':3,'free':3,'tree':3,'four':4,'for':4,'five':5,'six':6,'seven':7,'eight':8,'ate':8,'nine':9,'ten':10,'eleven':11,'twelve':12}});
-const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false,mode:'pads',songPlaying:false,songView:'easy'};
+const AppState={sounds:[],playing:new Map(),decodedBuffers:new Map(),banks:['Main'],activeBank:'Main',activeCategory:'All',editMode:false,loopMode:false,searchVisible:false,searchQuery:'',voiceActive:false,editingSoundId:null,pendingFiles:[],sortableInstance:null,favoritesOnly:false,mode:'pads',songPlaying:false,songView:'studio'};
 
 // ═══ STORAGE ═══
 const Storage=(()=>{let db=null;
@@ -1876,13 +1950,21 @@ const SongBuilder=(()=>{
     const song=active();if(!song)return;
     stop();song.layers=[];await persist();renderEasy();renderLayers();
   }
-  function setView(v){
-    AppState.songView=v;
+  // applyView is separate from setView so entering Songs mode shows the right
+  // view too - not only tapping the switch. Without this the studio renders
+  // nothing on first entry and the slot view shows underneath it.
+  function applyView(v){
     document.querySelectorAll('.vs-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
-    document.getElementById('easyView').style.display=v==='easy'?'':'none';
-    document.getElementById('advancedView').style.display=v==='advanced'?'':'none';
-    if(v==='easy')renderEasy();else renderAll();
+    const sv=document.getElementById('studioView'),ev=document.getElementById('easyView'),av=document.getElementById('advancedView');
+    if(sv)sv.style.display=v==='studio'?'':'none';
+    if(ev)ev.style.display=v==='easy'?'':'none';
+    if(av)av.style.display=v==='advanced'?'':'none';
+    if(v!=='studio'&&typeof Studio!=='undefined'&&Studio.isPlaying())Studio.stop();  // one thing sounds at a time
+    if(v==='studio'){if(typeof Studio!=='undefined')Studio.open()}
+    else if(v==='easy')renderEasy();
+    else renderAll();
   }
+  function setView(v){AppState.songView=v;applyView(v)}
   // flash the slot whose sound just fired
   function pulseSlot(slotIdx,when){
     const c=AudioEngine.getContext();
@@ -2033,7 +2115,7 @@ const SongBuilder=(()=>{
   }
   return{open,create,select,rename,remove,toggleLoop,play,stop,addStep,removeStep,moveStep,setGap,
          addLayer,removeLayer,selectLayer,toggleLayer,setLayerParam,resetLayerParams,setBpm,setBars,toggleCell,renderLibrary,
-         openPicker,closePicker,pickSound,starterBeat,dropSound,clearSlot,clearAll,setView,renderEasy};
+         openPicker,closePicker,pickSound,starterBeat,dropSound,clearSlot,clearAll,setView,applyView,renderEasy};
 })();
 
 // ═══ MEME PACK ═══
@@ -2258,6 +2340,752 @@ const MemePack=(()=>{
   return{install,count:PACK.length,_PACK:PACK,_synth:synth,_finish:finish,_toBlob:toBlob};
 })();
 
+// ═══ STUDIO — style-driven music maker ═══
+// A STYLE owns tempo, feel, key and chord movement, and every part derives
+// from it. That is what makes this safe for a child: there is no combination
+// of buttons that can be out of key or out of time, because nothing is chosen
+// freely - the style decides, the child only picks which parts are playing.
+// All sound is synthesised live (no samples), and all patterns are written
+// here as generic genre vocabulary - a walking bass, a swung ride - not any
+// particular song.
+const Studio=(()=>{
+  const LOOKAHEAD=.4, TICK=50, STEPS=16;          // one bar = 16 sixteenths
+  const CHORDS={min:[0,3,7],maj:[0,4,7],min7:[0,3,7,10],dom7:[0,4,7,10],maj7:[0,4,7,11]};
+
+  const STYLES=[
+    {
+      id:'hiphop', name:'Hip Hop', icon:'🎤', bpm:88, swing:.18, root:48,   // C3
+      scale:[0,3,5,7,10],                                                    // minor pentatonic
+      prog:[{r:0,t:'min7'},{r:0,t:'min7'},{r:8,t:'maj7'},{r:10,t:'dom7'}],
+      drums:[
+        {name:'Boom Bap', kick:[[0,0],[6,0],[10,.35]], snare:[[4,0],[12,0]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0],[1,.8],[5,.8],[9,.8],[13,.8]]},
+        {name:'Laid Back', kick:[[0,0],[7,0],[10,.5]], snare:[[4,0],[12,0],[14,.75]],
+         hat:[[0,0],[4,0],[8,0],[12,0],[2,.5],[6,.5],[10,.5],[14,.5]]},
+      ],
+      bassStyle:'root', chordStyle:'stab', leadStyle:'pent',
+    },
+    {
+      id:'rock', name:'Rock', icon:'🤘', bpm:124, swing:0, root:48,        // Cm - Ab - Bb
+      scale:[0,3,5,7,10],                                                    // minor pentatonic
+      prog:[{r:0,t:'min'},{r:0,t:'min'},{r:8,t:'maj'},{r:10,t:'maj'}],
+      drums:[
+        {name:'Straight', kick:[[0,0],[8,0],[10,.5]], snare:[[4,0],[12,0]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0],[1,.7],[5,.7],[9,.7],[13,.7]]},
+        {name:'Stadium', kick:[[0,0],[8,0],[3,.5],[11,.5]], snare:[[4,0],[12,0],[14,.7]],
+         hat:[[0,0],[4,0],[8,0],[12,0]], hatOpen:[[6,.35],[14,.35]]},
+      ],
+      bassStyle:'drive', chordStyle:'power', leadStyle:'pent',
+    },
+    {
+      id:'disco', name:'Disco', icon:'🪩', bpm:120, swing:0, root:48,      // Am7 - Dm7 - G7
+      scale:[0,2,4,5,7,9,11],                                                // C major - all diatonic
+      prog:[{r:9,t:'min7'},{r:9,t:'min7'},{r:2,t:'min7'},{r:7,t:'dom7'}],
+      drums:[
+        {name:'Four Floor', kick:[[0,0],[4,0],[8,0],[12,0]], snare:[[4,0],[12,0]],
+         hat:[[0,0],[4,0],[8,0],[12,0]], hatOpen:[[2,0],[6,0],[10,0],[14,0]]},
+        {name:'Hustle', kick:[[0,0],[4,0],[8,0],[12,0]], snare:[[4,0],[12,0],[7,.6],[15,.6]],
+         hat:[[1,.5],[3,.5],[5,.5],[7,.5],[9,.5],[11,.5],[13,.5],[15,.5],[0,0],[4,0],[8,0],[12,0]],
+         hatOpen:[[2,0],[10,0]]},
+      ],
+      bassStyle:'octave', chordStyle:'offbeat', leadStyle:'scale',
+    },
+    {
+      id:'dance', name:'Dance', icon:'🎹', bpm:128, swing:0, root:48,      // Cm7 - Ab - Fm7 - Eb
+      scale:[0,2,3,5,7,8,10],                                                // natural minor
+      prog:[{r:0,t:'min7'},{r:8,t:'maj7'},{r:5,t:'min7'},{r:3,t:'maj'}],
+      drums:[
+        {name:'Club', kick:[[0,0],[4,0],[8,0],[12,0]], snare:[[12,0],[4,.5]],
+         hatOpen:[[2,0],[6,0],[10,0],[14,0]]},
+        {name:'Deep', kick:[[0,0],[4,0],[8,0],[12,0]], snare:[[4,.5],[12,.5]],
+         hat:[[2,.3],[6,.3],[10,.3],[14,.3],[1,.8],[5,.8],[9,.8],[13,.8]],
+         hatOpen:[[6,0],[14,0]]},
+      ],
+      bassStyle:'pump', chordStyle:'stab', leadStyle:'scale',
+    },
+    {
+      id:'reggae', name:'Reggae', icon:'🌴', bpm:75, swing:0, root:48,     // Cm - Bb, one drop
+      scale:[0,3,5,7,10],
+      prog:[{r:0,t:'min'},{r:0,t:'min'},{r:10,t:'maj'},{r:10,t:'maj'}],
+      drums:[
+        {name:'One Drop', kick:[[8,0]], snare:[[8,0]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0]]},
+        {name:'Rockers', kick:[[0,0],[8,0],[4,.5],[12,.5]], snare:[[8,0],[12,.6]],
+         hat:[[2,0],[6,0],[10,0],[14,0]], hatOpen:[[14,.7]]},
+      ],
+      bassStyle:'dub', chordStyle:'offbeat', leadStyle:'pent',
+    },
+    {
+      id:'country', name:'Country', icon:'🤠', bpm:100, swing:.3, root:48, // C - F - G
+      scale:[0,2,4,7,9],                                                     // major pentatonic
+      prog:[{r:0,t:'maj'},{r:0,t:'maj'},{r:5,t:'maj'},{r:7,t:'maj'}],
+      drums:[
+        {name:'Train', kick:[[0,0],[8,0]], snare:[[4,0],[12,0]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0]]},
+        {name:'Two Step', kick:[[0,0],[8,0],[6,.4]], snare:[[4,0],[12,0],[14,.7]],
+         hat:[[0,0],[4,0],[8,0],[12,0],[2,.5],[6,.5],[10,.5],[14,.5]]},
+      ],
+      bassStyle:'boomchick', chordStyle:'pop', leadStyle:'pent',
+    },
+    {
+      id:'funk', name:'Funk', icon:'🕺', bpm:104, swing:.12, root:50,      // D dorian vamp
+      scale:[0,2,3,5,7,9,10],
+      prog:[{r:0,t:'min7'},{r:0,t:'min7'},{r:5,t:'dom7'},{r:5,t:'dom7'}],
+      drums:[
+        {name:'Tight', kick:[[0,0],[3,0],[6,.3],[10,0],[11,.7]], snare:[[4,0],[12,0],[14,.8]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0],[1,.5],[3,.5],[5,.5],[7,.5],[9,.5],[11,.5],[13,.5],[15,.5]]},
+        {name:'Loose', kick:[[0,0],[6,0],[10,.4]], snare:[[4,0],[12,0]],
+         hat:[[2,0],[6,0],[10,0],[14,0],[0,.5],[4,.5],[8,.5],[12,.5]]},
+      ],
+      bassStyle:'funk', chordStyle:'comp', leadStyle:'scale',
+    },
+    {
+      id:'motown', name:'Motown', icon:'🎺', bpm:128, swing:0, root:48,    // I-vi-IV-V in C
+      scale:[0,2,4,7,9],                                                     // major pentatonic
+      prog:[{r:0,t:'maj'},{r:9,t:'min'},{r:5,t:'maj'},{r:7,t:'maj'}],
+      drums:[
+        {name:'Classic', kick:[[0,0],[8,0],[4,.6],[12,.6]], snare:[[4,0],[12,0]],
+         hat:[[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0]]},
+        {name:'Stomp', kick:[[0,0],[4,0],[8,0],[12,0]], snare:[[4,0],[12,0],[7,.7],[15,.7]],
+         hat:[[2,0],[6,0],[10,0],[14,0]]},
+      ],
+      bassStyle:'melodic', chordStyle:'pop', leadStyle:'pent',
+    },
+    {
+      id:'jazz',
+      name:'Jazz', icon:'🎷', bpm:132, swing:.62, root:48,                 // swung, ii-V-I
+      scale:[0,2,4,5,7,9,11],                                                // major - fits the whole ii-V-I
+      prog:[{r:2,t:'min7'},{r:7,t:'dom7'},{r:0,t:'maj7'},{r:0,t:'maj7'}],
+      drums:[
+        {name:'Swing', kick:[[0,.85]], snare:[[4,.6],[12,.6]],
+         ride:[[0,0],[4,0],[6,0],[8,0],[12,0],[14,0],[2,.6],[10,.6]], hatFoot:[[4,0],[12,0]]},
+        {name:'Brushes', kick:[[0,.9]], snare:[[2,.4],[6,.4],[10,.4],[14,.4]],
+         ride:[[0,0],[4,0],[8,0],[12,0],[6,.5],[14,.5]], hatFoot:[[4,0],[12,0]]},
+      ],
+      bassStyle:'walk', chordStyle:'comp', leadStyle:'scale',
+    },
+  ];
+
+  // ── state ──
+  let styleIdx=0, variation=0, groove=.5, speed=1,
+      on={drums:false,bass:false,chords:false,melody:false,voice:false},
+      voiceBuf=null, playing=false, timer=null, nextBar=0, barCount=0, token=0, master=null;
+  // Beat editor (advanced): a per-style 16-step pattern the user draws by hand.
+  // 0 = silent, 1 = normal hit, 2 = accent. Drawing it is how one song stops
+  // sounding like the preset it started from.
+  let custom={}, useCustom={}, recipeOf={}, beatOpen=false, originTime=0, phTimer=null;
+
+  // Lanes are the drum voices a hand-drawn beat can use. vol is [normal, accent]
+  // - the accent is the 'rise', and it is a real level change, not a highlight.
+  const LANES=[
+    {k:'kick', icon:'🥁', label:'Kick',  vol:[.66,.98], fn:(t,v)=>vKick(t,v)},
+    {k:'snare',icon:'👏', label:'Snare', vol:[.52,.82], fn:(t,v)=>vSnare(t,v)},
+    {k:'hat',  icon:'🎩', label:'Hat',   vol:[.34,.62], fn:(t,v)=>vHat(t,v,false)},
+    {k:'open', icon:'⭕',     label:'Open',  vol:[.40,.66], fn:(t,v)=>vHat(t,v,true)},
+    {k:'ride', icon:'🔔', label:'Ride',  vol:[.48,.80], fn:(t,v)=>vRide(t,v)},
+  ];
+
+  const style=()=>STYLES[styleIdx];
+  const bpm=()=>Math.round(style().bpm*speed);
+  const stepDur=()=>(60/bpm())/4;
+  const barDur=()=>stepDur()*STEPS;
+  const mtof=m=>440*Math.pow(2,(m-69)/12);
+  // Swing pushes the off-eighths late, which is the whole feel of jazz.
+  const swingOffset=i=>(i%4===2)?style().swing*.667*stepDur():0;
+
+  function ctx(){return AudioEngine.getContext()}
+  function bus(){
+    const c=ctx();
+    if(!master||master.context!==c){
+      master=c.createGain();master.gain.value=.75;
+      const lim=c.createDynamicsCompressor();      // stop stacked parts clipping
+      lim.threshold.value=-8;lim.knee.value=6;lim.ratio.value=12;
+      lim.attack.value=.003;lim.release.value=.2;
+      master.connect(lim);lim.connect(c.destination);
+    }
+    return master;
+  }
+  let nb=null;
+  function noiseBuf(){
+    const c=ctx();
+    if(nb&&nb.sampleRate===c.sampleRate)return nb;
+    nb=c.createBuffer(1,c.sampleRate,c.sampleRate);
+    const d=nb.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    return nb;
+  }
+  function env(g,t,peak,dec,rel){
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+.004);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dec+(rel||0));
+  }
+
+  // ── voices ──
+  function vKick(t,v){
+    const c=ctx(),o=c.createOscillator(),g=c.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(150,t);
+    o.frequency.exponentialRampToValueAtTime(45,t+.11);
+    env(g,t,v,.32);
+    o.connect(g);g.connect(bus());o.start(t);o.stop(t+.45);
+  }
+  function vSnare(t,v){
+    const c=ctx(),n=c.createBufferSource(),hp=c.createBiquadFilter(),ng=c.createGain(),
+          o=c.createOscillator(),og=c.createGain();
+    n.buffer=noiseBuf();hp.type='highpass';hp.frequency.value=1400;
+    env(ng,t,v*.8,.16);
+    n.connect(hp);hp.connect(ng);ng.connect(bus());n.start(t);n.stop(t+.25);
+    o.type='triangle';o.frequency.setValueAtTime(190,t);
+    env(og,t,v*.5,.09);
+    o.connect(og);og.connect(bus());o.start(t);o.stop(t+.2);
+  }
+  function vHat(t,v,open){
+    const c=ctx(),n=c.createBufferSource(),hp=c.createBiquadFilter(),g=c.createGain();
+    n.buffer=noiseBuf();hp.type='highpass';hp.frequency.value=7000;
+    env(g,t,v*.5,open?.22:.045);
+    n.connect(hp);hp.connect(g);g.connect(bus());n.start(t);n.stop(t+(open?.3:.1));
+  }
+  function vRide(t,v){                       // metallic ping + shimmer
+    const c=ctx(),n=c.createBufferSource(),bp=c.createBiquadFilter(),g=c.createGain();
+    n.buffer=noiseBuf();bp.type='bandpass';bp.frequency.value=6200;bp.Q.value=1.4;
+    env(g,t,v*.32,.5);
+    n.connect(bp);bp.connect(g);g.connect(bus());n.start(t);n.stop(t+.6);
+    const o=c.createOscillator(),og=c.createGain();
+    o.type='triangle';o.frequency.value=2100;
+    env(og,t,v*.14,.28);
+    o.connect(og);og.connect(bus());o.start(t);o.stop(t+.35);
+  }
+  function vBass(t,v,f,dur){
+    const c=ctx(),o=c.createOscillator(),lp=c.createBiquadFilter(),g=c.createGain();
+    o.type='sawtooth';o.frequency.value=f;
+    lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(2600,f*9),t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(180,f*3),t+dur*.9);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(v,t+.012);
+    g.gain.setValueAtTime(v,t+dur*.7);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(lp);lp.connect(g);g.connect(bus());o.start(t);o.stop(t+dur+.05);
+  }
+  function vChord(t,v,freqs,dur,soft){
+    const c=ctx();
+    freqs.forEach((f,i)=>{
+      const o=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();
+      o.type='sawtooth';o.frequency.value=f*(1+(i-1)*.0016);   // slight detune = warmth
+      lp.type='lowpass';lp.frequency.value=soft?1500:2600;
+      const peak=v/(freqs.length+1);
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(peak,t+(soft?.06:.012));
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(lp);lp.connect(g);g.connect(bus());o.start(t);o.stop(t+dur+.05);
+    });
+  }
+  function vPluck(t,v,f,dur){
+    const c=ctx(),o=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();
+    o.type='triangle';o.frequency.value=f;
+    lp.type='lowpass';lp.frequency.setValueAtTime(f*6,t);
+    lp.frequency.exponentialRampToValueAtTime(f*2,t+dur);
+    env(g,t,v*.5,dur);
+    o.connect(lp);lp.connect(g);g.connect(bus());o.start(t);o.stop(t+dur+.05);
+  }
+
+  // Classic rhythm patterns: the handful of beats that most popular music is
+  // actually built from. These are generic drum vocabulary - a backbeat, a
+  // clave, a one drop - not any particular song, and each is named for what it
+  // sounds like out loud, because that is how a child recognises a beat.
+  // Values: 2 = accent (the loud one), 1 = normal.
+  const RECIPES=[
+    {id:'stomp', icon:'👟', name:'Stomp Clap', say:'boom boom CLAP',
+     pat:{kick:[[0,2],[4,2]], snare:[[8,2]]}},
+    {id:'back',  icon:'🤘', name:'Backbeat', say:'boom tss BAP tss',
+     pat:{kick:[[0,2],[8,2]], snare:[[4,2],[12,2]],
+          hat:[[0,1],[2,1],[4,1],[6,1],[8,1],[10,1],[12,1],[14,1]]}},
+    {id:'four',  icon:'🪩', name:'Four Floor', say:'boom boom boom boom',
+     pat:{kick:[[0,2],[4,2],[8,2],[12,2]], snare:[[4,1],[12,1]],
+          open:[[2,1],[6,1],[10,1],[14,1]]}},
+    {id:'bap',   icon:'🎤', name:'Boom Bap', say:'boom BAP ba-boom BAP',
+     pat:{kick:[[0,2],[6,2],[10,1]], snare:[[4,2],[12,2]],
+          hat:[[0,1],[2,1],[4,1],[6,1],[8,1],[10,1],[12,1],[14,1]]}},
+    {id:'half',  icon:'🐘', name:'Half Time', say:'boom . . . BAP',
+     pat:{kick:[[0,2],[6,1]], snare:[[8,2]],
+          hat:[[0,1],[4,1],[8,1],[12,1]]}},
+    {id:'break', icon:'💥', name:'Break', say:'boom BAP ba-BAP-bap',
+     pat:{kick:[[0,2],[10,2]], snare:[[4,2],[12,2],[14,1]],
+          hat:[[0,1],[2,1],[4,1],[6,1],[8,1],[10,1],[12,1],[14,1]]}},
+    {id:'drop',  icon:'🌴', name:'One Drop', say:'. . . BOOM',
+     pat:{kick:[[8,2]], snare:[[8,2]],
+          hat:[[0,1],[2,1],[4,1],[6,1],[8,1],[10,1],[12,1],[14,1]]}},
+    {id:'train', icon:'🚂', name:'Train', say:'chugga chugga chugga',
+     pat:{kick:[[0,2],[8,2]],
+          snare:[[0,1],[1,1],[2,1],[3,1],[4,2],[5,1],[6,1],[7,1],
+                 [8,1],[9,1],[10,1],[11,1],[12,2],[13,1],[14,1],[15,1]]}},
+    {id:'clave', icon:'🌶️', name:'Clave', say:'boom . boom . boom-boom',
+     pat:{kick:[[0,1],[8,1]], ride:[[0,2],[3,2],[6,2],[10,2],[12,2]],
+          hat:[[2,1],[6,1],[10,1],[14,1]]}},
+  ];
+
+  // ── beat editor ──
+  // Seeded from the preset the user is already hearing, never from an empty
+  // grid: editing a beat you can hear is a far smaller step than inventing one.
+  function seedCustom(){
+    const kit=style().drums[variation%style().drums.length];
+    const rows={};LANES.forEach(L=>rows[L.k]=new Array(STEPS).fill(0));
+    const put=(list,lane)=>{(list||[]).forEach(([step,d])=>{
+      // Structural hits (density 0) seed as accents; embellishments as normal.
+      const v=d?1:2;if(v>rows[lane][step])rows[lane][step]=v})};
+    put(kit.kick,'kick');put(kit.snare,'snare');
+    put(kit.hat,'hat');put(kit.hatFoot,'hat');
+    put(kit.hatOpen,'open');put(kit.ride,'ride');
+    return rows;
+  }
+  function pattern(){
+    const id=style().id;
+    if(!custom[id])custom[id]=seedCustom();
+    return custom[id];
+  }
+  const isCustom=()=>!!useCustom[style().id];
+  const BEAT_KEY='sonus.studio.beats';
+  function saveBeats(){
+    try{localStorage.setItem(BEAT_KEY,JSON.stringify({custom:custom,use:useCustom,recipe:recipeOf}))}catch(e){}
+  }
+  function loadBeats(){
+    try{
+      const raw=localStorage.getItem(BEAT_KEY);if(!raw)return;
+      const o=JSON.parse(raw)||{};
+      if(o.custom&&typeof o.custom==='object')custom=o.custom;
+      if(o.use&&typeof o.use==='object')useCustom=o.use;
+      if(o.recipe&&typeof o.recipe==='object')recipeOf=o.recipe;
+    }catch(e){custom={};useCustom={};recipeOf={}}
+  }
+  function loadRecipe(id){
+    const r=RECIPES.find(x=>x.id===id);if(!r)return;
+    const rows={};LANES.forEach(L=>rows[L.k]=new Array(STEPS).fill(0));
+    Object.keys(r.pat).forEach(lane=>{
+      if(!rows[lane])return;
+      r.pat[lane].forEach(([step,v])=>{rows[lane][step]=v});
+    });
+    const id2=style().id;
+    custom[id2]=rows;useCustom[id2]=true;recipeOf[id2]=r.id;
+    saveBeats();render();
+    UI.showToast(r.name+' — '+r.say);
+    if(!playing&&on.drums)start();
+  }
+
+  function tapCell(lane,step){
+    const row=pattern()[lane];if(!row)return;
+    row[step]=(row[step]+1)%3;                       // off → hit → accent → off
+    useCustom[style().id]=true;
+    delete recipeOf[style().id];                     // edited: it is theirs now
+    saveBeats();
+    // Preview the hit so the change is audible even while stopped.
+    if(row[step]){
+      const L=LANES.find(x=>x.k===lane);
+      if(L)try{L.fn(ctx().currentTime+.01,L.vol[row[step]-1])}catch(e){}
+    }
+    render();
+  }
+  function resetBeat(){
+    delete custom[style().id];useCustom[style().id]=false;delete recipeOf[style().id];
+    saveBeats();render();
+    UI.showToast('Back to '+style().drums[variation%style().drums.length].name);
+  }
+  function clearBeat(){
+    const rows={};LANES.forEach(L=>rows[L.k]=new Array(STEPS).fill(0));
+    custom[style().id]=rows;useCustom[style().id]=true;delete recipeOf[style().id];
+    saveBeats();render();
+  }
+
+  // ── pattern builders ──
+  // Every hit carries a density value; the Groove slider is the threshold, so
+  // core hits always sound and embellishments fade in as groove rises.
+  const gate=d=>groove>=d;
+  function chordAt(bar){const p=style().prog;return p[bar%p.length]}
+  function chordNotes(bar,oct){
+    const ch=chordAt(bar),iv=CHORDS[ch.t]||CHORDS.min;
+    return iv.map(i=>style().root+ch.r+i+(oct||0)*12);
+  }
+
+  function drumEvents(bar){
+    const ev=[];
+    if(isCustom()){
+      // A hand-drawn beat plays exactly as drawn - the Groove slider must not
+      // silence a hit the user deliberately placed. Groove still shapes the
+      // bass, chords and melody around it.
+      const pat=pattern();
+      LANES.forEach(L=>{
+        const row=pat[L.k]||[];
+        for(let st=0;st<STEPS;st++){
+          const v=row[st];if(!v)continue;
+          const vol=L.vol[v-1];
+          ev.push({step:st,fn:t=>L.fn(t,vol)});
+        }
+      });
+      return ev;
+    }
+    const kit=style().drums[variation%style().drums.length];
+    const add=(list,fn)=>{(list||[]).forEach(([step,d])=>{if(gate(d))ev.push({step,fn})})};
+    add(kit.kick,   t=>vKick(t,.95));
+    add(kit.snare,  t=>vSnare(t,.75));
+    add(kit.hat,    t=>vHat(t,.6,false));
+    add(kit.hatOpen,t=>vHat(t,.6,true));
+    add(kit.ride,   t=>vRide(t,.75));
+    add(kit.hatFoot,t=>vHat(t,.45,false));
+    return ev;
+  }
+
+  function bassEvents(bar){
+    const st=style(),ch=chordAt(bar),ev=[];
+    if(st.bassStyle==='walk'){
+      // Walking bass: one note per beat moving through the chord, with a
+      // step-wise approach into the next bar's root.
+      const iv=CHORDS[ch.t],next=chordAt(bar+1);
+      const tones=[0,iv[1],iv[2],(next.r-ch.r+11)%12||1];
+      tones.forEach((semi,b)=>{
+        ev.push({step:b*4,fn:t=>vBass(t,.6,mtof(st.root-12+ch.r+semi),stepDur()*3.4)});
+      });
+    }else if(st.bassStyle==='funk'){
+      // Funk bass is the lead instrument: syncopated sixteenths with octave pops.
+      const root=st.root-12+ch.r;
+      const hits=[[0,0,0],[3,0,0],[6,.3,12],[7,.6,0],[10,0,0],[13,.5,12],[14,.75,0]];
+      hits.forEach(([step,d,o])=>{if(gate(d))
+        ev.push({step,fn:t=>vBass(t,.78,mtof(root+o),stepDur()*1.15)})});
+    }else if(st.bassStyle==='melodic'){
+      // Motown bass moves through the chord rather than sitting on the root.
+      const iv=CHORDS[ch.t]||CHORDS.maj, root=st.root-12+ch.r;
+      const shape=[0,0,iv[1],iv[2],0,iv[2],iv[1],0];
+      for(let i=0;i<8;i++){
+        if(!gate(i%2===0?0:.45))continue;
+        ev.push({step:i*2,fn:t=>vBass(t,.68,mtof(root+shape[i]),stepDur()*1.6)});
+      }
+    }else if(st.bassStyle==='drive'||st.bassStyle==='octave'){
+      // Rock drives straight eighths on the root; disco pops the octave between
+      // them. Same engine, one flag apart - the octave is what makes it disco.
+      const root=st.root-12+ch.r,oct=st.bassStyle==='octave';
+      for(let i=0;i<8;i++){
+        if(!gate(i%2===0?0:.35))continue;
+        const semi=(oct&&i%2===1)?12:0;
+        ev.push({step:i*2,fn:t=>vBass(t,.72,mtof(root+semi),stepDur()*1.7)});
+      }
+    }else if(st.bassStyle==='pump'){
+      // House bass lives in the gaps between the four-on-the-floor kicks.
+      const root=st.root-12+ch.r;
+      [[2,0],[6,0],[10,0],[14,0],[0,.7],[8,.7]].forEach(([step,d])=>{if(gate(d))
+        ev.push({step,fn:t=>vBass(t,.8,mtof(root),stepDur()*1.5)})});
+    }else if(st.bassStyle==='dub'){
+      // Reggae bass is sparse and round - it leaves the beat mostly empty.
+      const iv=CHORDS[ch.t]||CHORDS.min,root=st.root-12+ch.r;
+      [[0,0,0],[3,0,12],[6,.4,iv[2]],[11,.6,0]].forEach(([step,d,semi])=>{if(gate(d))
+        ev.push({step,fn:t=>vBass(t,.85,mtof(root+semi),stepDur()*2.4)})});
+    }else if(st.bassStyle==='boomchick'){
+      // Country alternates root and fifth - the 'boom chick' of a two step.
+      const iv=CHORDS[ch.t]||CHORDS.maj,root=st.root-12+ch.r;
+      [[0,0,0],[4,0,iv[2]],[8,0,0],[12,0,iv[2]],[14,.7,iv[1]]].forEach(([step,d,semi])=>{if(gate(d))
+        ev.push({step,fn:t=>vBass(t,.72,mtof(root+semi),stepDur()*1.8)})});
+    }else{
+      const root=st.root-12+ch.r;
+      const hits=[[0,0],[6,0],[10,.4],[14,.75]];
+      hits.forEach(([step,d])=>{if(gate(d))
+        ev.push({step,fn:t=>vBass(t,.7,mtof(root),stepDur()*2.6)})});
+    }
+    return ev;
+  }
+
+  function chordEvents(bar){
+    const st=style();
+    const freqs=chordNotes(bar,0).map(mtof);
+    if(st.chordStyle==='comp'){
+      // Jazz comping: syncopated stabs, never on the downbeat every time.
+      const hits=[[2,0],[7,0],[10,.45],[13,.7]];
+      return hits.filter(([,d])=>gate(d)).map(([step])=>({step,fn:t=>vChord(t,.5,freqs,stepDur()*2.2,false)}));
+    }
+    if(st.chordStyle==='pop'){
+      const hits=[[0,0],[4,0],[8,0],[12,0],[6,.7],[14,.7]];
+      return hits.filter(([,d])=>gate(d)).map(([step])=>({step,fn:t=>vChord(t,.4,freqs,stepDur()*1.5,false)}));
+    }
+    if(st.chordStyle==='power'){
+      // Rock power chords: root and fifth only, held. Dropping the third is
+      // what stops a stack of loud saw waves turning to mud.
+      const pw=[freqs[0],freqs[freqs.length-1]];
+      const hits=[[0,0],[8,0],[12,.6]];
+      return hits.filter(([,d])=>gate(d)).map(([step])=>({step,fn:t=>vChord(t,.5,pw,stepDur()*3.2,false)}));
+    }
+    if(st.chordStyle==='offbeat'){
+      // The upbeat chop shared by disco guitar and the reggae skank - never
+      // on the beat, which is exactly why the beat feels so strong.
+      const hits=[[2,0],[6,0],[10,0],[14,0]];
+      return hits.filter(([,d])=>gate(d)).map(([step])=>({step,fn:t=>vChord(t,.45,freqs,stepDur()*.85,false)}));
+    }
+    const hits=[[0,0],[8,.3],[11,.75]];
+    return hits.filter(([,d])=>gate(d)).map(([step])=>({step,fn:t=>vChord(t,.42,freqs,stepDur()*3.4,true)}));
+  }
+
+  function melodyEvents(bar){
+    const st=style(),sc=st.scale,ch=chordAt(bar),ev=[];
+    // Deterministic per bar so a phrase repeats and feels intentional, but
+    // every scale degree is safe against the chord underneath.
+    let seed=(bar*2654435761+styleIdx*97+variation*31)>>>0;
+    const rnd=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
+    const slots=st.leadStyle==='scale'?[0,2,4,6,8,10,12,14]:[0,3,6,10,12];
+    slots.forEach((step,i)=>{
+      const d=i<3?0:.45;
+      if(!gate(d))return;
+      if(rnd()<.25)return;                       // rests keep it from droning
+      const deg=Math.floor(rnd()*sc.length);
+      const note=st.root+12+sc[deg];   // home key, NOT transposed per chord
+      ev.push({step,fn:t=>vPluck(t,.5,mtof(note),stepDur()*1.7)});
+    });
+    return ev;
+  }
+
+  function voiceEvents(bar){
+    if(!voiceBuf)return[];
+    return[{step:0,fn:t=>{
+      const c=ctx(),s=c.createBufferSource(),g=c.createGain();
+      s.buffer=voiceBuf;g.gain.value=.9;
+      s.playbackRate.value=voicePitch;
+      s.connect(g);g.connect(bus());
+      try{s.start(t)}catch(e){}
+      live.push(s);s.onended=()=>{const i=live.indexOf(s);if(i>-1)live.splice(i,1)};
+    }}];
+  }
+  let voicePitch=1, live=[];
+
+  // ── scheduler ──
+  function scheduleBar(bar,base){
+    const evs=[];
+    if(on.drums) evs.push(...drumEvents(bar));
+    if(on.bass)  evs.push(...bassEvents(bar));
+    if(on.chords)evs.push(...chordEvents(bar));
+    if(on.melody)evs.push(...melodyEvents(bar));
+    if(on.voice) evs.push(...voiceEvents(bar));
+    for(const e of evs){
+      const t=base+e.step*stepDur()+swingOffset(e.step);
+      try{e.fn(t)}catch(err){}
+    }
+    flashAt(base,bar);
+  }
+  function tick(){
+    const c=ctx(),horizon=c.currentTime+LOOKAHEAD;
+    let guard=0;
+    while(nextBar<horizon&&guard++<4){
+      scheduleBar(barCount,nextBar);
+      nextBar+=barDur();barCount++;
+    }
+  }
+  function start(){
+    if(playing)return;
+    const c=ctx();
+    token++;playing=true;
+    barCount=0;nextBar=c.currentTime+.12;originTime=nextBar;
+    tick();clearInterval(timer);timer=setInterval(tick,TICK);
+    render();
+  }
+  function stop(){
+    token++;playing=false;clearInterval(timer);timer=null;
+    for(const s of live){try{s.stop()}catch(e){}}
+    live=[];
+    render();
+  }
+  function toggle(){playing?stop():start()}
+
+  // ── UI ──
+  const PARTS=[
+    {k:'drums', icon:'🥁', label:'Drums'},
+    {k:'bass',  icon:'🎸', label:'Bass'},
+    {k:'chords',icon:'🎹', label:'Chords'},
+    {k:'melody',icon:'✨', label:'Melody'},
+    {k:'voice', icon:'🎤', label:'My Voice'},
+  ];
+  const VOICE_FX=[
+    {id:'chip',   icon:'🐿️', label:'Chipmunk', rate:1.7},
+    {id:'normal', icon:'🙂', label:'Normal',   rate:1},
+    {id:'monster',icon:'👹', label:'Monster',  rate:.62},
+    {id:'robot',  icon:'🤖', label:'Robot',    rate:.85},
+  ];
+  let voiceFx='normal';
+
+  function flashAt(base,bar){
+    const c=ctx(),delay=Math.max(0,(base-c.currentTime)*1000);
+    setTimeout(()=>{
+      if(!playing)return;
+      const el=document.getElementById('stBeat');
+      if(el){el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');
+        el.textContent='Bar '+((bar%4)+1)}
+      // flash the part buttons that are actually sounding
+      document.querySelectorAll('.st-part.on').forEach(b=>{
+        b.classList.remove('beat');void b.offsetWidth;b.classList.add('beat')});
+    },delay);
+  }
+
+  function render(){
+    const box=document.getElementById('studioView');
+    if(!box||AppState.songView!=='studio')return;
+    const st=style();
+    const chips=STYLES.map((s,i)=>
+      `<button class="st-chip ${i===styleIdx?'sel':''}" data-style="${i}">${s.icon} ${s.name}</button>`).join('');
+    const cust=isCustom();
+    const vars=st.drums.map((d,i)=>
+      `<button class="st-var ${(!cust&&i===variation)?'sel':''}" data-var="${i}">${d.name}</button>`).join('')
+      +`<button class="st-var st-mine ${cust?'sel':''}" data-var="mine">🎛️ My Beat</button>`;
+
+    // The grid only exists once the user asks for it - the simple flow above
+    // is untouched until then.
+    let beatPanel='';
+    if(beatOpen){
+      const pat=pattern();
+      const ruler=Array.from({length:STEPS},(_,i)=>
+        `<span class="bl-num ${i%4===0?'on':''}">${i%4===0?(i/4+1):'·'}</span>`).join('');
+      const rows=LANES.map(L=>{
+        const row=pat[L.k]||[];
+        const cells=Array.from({length:STEPS},(_,i)=>
+          `<button class="bl-cell v${row[i]||0} ${i%4===0?'dw':''}" data-lane="${L.k}" data-step="${i}"
+             aria-label="${L.label} step ${i+1}"></button>`).join('');
+        return`<div class="bl-row"><span class="bl-lab">${L.icon}<i>${L.label}</i></span>${cells}</div>`;
+      }).join('');
+      const cur=recipeOf[st.id];
+      const recs=RECIPES.map(r=>
+        `<button class="bb-rec ${r.id===cur?'sel':''}" data-rec="${r.id}">
+           <b>${r.icon} ${r.name}</b><i>${r.say}</i></button>`).join('');
+      beatPanel=`<div class="st-beatbox">
+        <div class="bb-head"><span>Start from a classic — then change it</span></div>
+        <div class="bb-recs">${recs}</div>
+        <div class="bb-head"><span>Tap once = hit · twice = accent · again = off</span></div>
+        <div class="bb-scroll">
+          <div class="bl-row bl-ruler"><span class="bl-lab"></span>${ruler}</div>
+          ${rows}
+        </div>
+        <div class="bb-foot">
+          <button class="bb-btn" id="bbClear">🧹 Empty</button>
+          <button class="bb-btn" id="bbReset">↺ Reset</button>
+          <button class="bb-btn" id="bbClose">Done</button>
+        </div>
+      </div>`;
+    }
+    const parts=PARTS.map(p=>{
+      const active=on[p.k];
+      const needsRec=p.k==='voice'&&!voiceBuf;
+      return`<button class="st-part ${active?'on':''}" data-part="${p.k}">
+        <span class="sp-icon">${p.icon}</span><span class="sp-label">${p.label}</span>
+        <span class="sp-state">${needsRec?'record':(active?'ON':'off')}</span></button>`;
+    }).join('');
+    const fx=VOICE_FX.map(f=>
+      `<button class="st-fx ${f.id===voiceFx?'sel':''}" data-fx="${f.id}">${f.icon}<span>${f.label}</span></button>`).join('');
+    box.innerHTML=`
+      <div class="st-strip"><div class="st-styles">${chips}</div></div>
+      <div class="st-vars">${vars}</div>
+      ${beatPanel}
+      <div class="st-slider"><span class="ss-lab">🐢</span>
+        <input type="range" id="stSpeed" min="60" max="140" value="${Math.round(speed*100)}">
+        <span class="ss-lab">🐇</span><span class="ss-val">${bpm()} bpm</span></div>
+      <div class="st-slider"><span class="ss-lab">😌</span>
+        <input type="range" id="stGroove" min="0" max="100" value="${Math.round(groove*100)}">
+        <span class="ss-lab">🔥</span><span class="ss-val">groove</span></div>
+      <div class="st-parts">${parts}</div>
+      <div class="st-voice">
+        <button class="chop-btn" id="stRecBtn">${recording?'⏹ Stop recording':'⏺ Record my voice'}</button>
+        <div class="st-fxrow">${fx}</div>
+      </div>
+      <div class="st-transport">
+        <button class="action-btn btn-record" id="stPlay" style="flex:1">${playing?'<span>⏹</span> Stop':'<span>▶</span> Play'}</button>
+        <button class="icon-btn" id="stDice" title="Surprise me">🎲</button>
+        <span class="st-beat" id="stBeat">Bar 1</span>
+      </div>`;
+  }
+
+  // ── controls ──
+  function setStyle(i){
+    const wasPlaying=playing;
+    styleIdx=Math.max(0,Math.min(STYLES.length-1,i));
+    variation=0;
+    // Restart cleanly on the new tempo; parts stay exactly as the child left them.
+    if(wasPlaying){stop();start()}else render();
+    scrollChipIntoView();
+    if(beatOpen)startPlayhead();
+    UI.showToast(style().name);
+  }
+  function scrollChipIntoView(){
+    const sel=document.querySelector('.st-chip.sel');
+    if(sel&&sel.scrollIntoView)try{sel.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(e){}
+  }
+  function setVariation(v){
+    if(v==='mine'){                       // pick (or start) the hand-drawn beat
+      pattern();                          // seeds from what is playing right now
+      useCustom[style().id]=true;beatOpen=true;saveBeats();render();
+      startPlayhead();return;
+    }
+    variation=v;useCustom[style().id]=false;saveBeats();render();
+  }
+  function closeBeat(){beatOpen=false;stopPlayhead();render()}
+
+  // The playhead is what makes a grid readable - without it a child cannot
+  // tell which square is the sound they are hearing.
+  function startPlayhead(){
+    stopPlayhead();
+    phTimer=setInterval(()=>{
+      if(!beatOpen)return stopPlayhead();
+      const cur=document.querySelector('.bl-cell.ph');
+      const step=playing?Math.floor(((ctx().currentTime-originTime)/stepDur())%STEPS):-1;
+      if(cur&&+cur.dataset.step===step)return;
+      document.querySelectorAll('.bl-cell.ph').forEach(c=>c.classList.remove('ph'));
+      if(step>=0)document.querySelectorAll(`.bl-cell[data-step="${step}"]`).forEach(c=>c.classList.add('ph'));
+    },40);
+  }
+  function stopPlayhead(){if(phTimer){clearInterval(phTimer);phTimer=null}}
+  function setSpeed(v){speed=Math.max(.6,Math.min(1.4,(parseInt(v,10)||100)/100));
+    const el=document.querySelector('#stSpeed');if(el){const lab=el.parentNode.querySelector('.ss-val');if(lab)lab.textContent=bpm()+' bpm'}}
+  function setGroove(v){groove=Math.max(0,Math.min(1,(parseInt(v,10)||0)/100))}
+  function togglePart(k){
+    if(k==='voice'&&!voiceBuf){record();return}
+    on[k]=!on[k];
+    if(on[k]&&!playing)start();else render();
+  }
+  function dice(){
+    variation=Math.floor(Math.random()*style().drums.length);
+    groove=.3+Math.random()*.5;
+    render();
+  }
+  function setVoiceFx(id){
+    voiceFx=id;
+    const f=VOICE_FX.find(x=>x.id===id);
+    voicePitch=f?f.rate:1;
+    render();
+  }
+
+  // ── voice recording: two bars, then it loops with the band ──
+  let mr=null,chunks=[],recording=false;
+  async function record(){
+    if(mr&&mr.state==='recording'){mr.stop();return}
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks=[];mr=new MediaRecorder(stream);recording=true;render();
+      mr.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+      mr.onstop=async()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        recording=false;
+        try{
+          const blob=new Blob(chunks,{type:'audio/webm'});
+          voiceBuf=await AudioProcessing.decodeFile(new File([blob],'v.webm',{type:'audio/webm'}));
+          on.voice=true;
+          UI.showToast('Voice added — press Play');
+          if(!playing)start();else render();
+        }catch(e){UI.showToast('Could not use that recording');render()}
+      };
+      mr.start();
+      UI.showToast('Recording… tap again to stop');
+      setTimeout(()=>{if(mr&&mr.state==='recording')mr.stop()},barDur()*2000+400);  // auto-stop after 2 bars
+    }catch(e){
+      recording=false;render();
+      UI.showToast(e.name==='NotAllowedError'?'Mic blocked — allow microphone access':'Mic error');
+    }
+  }
+  function clearVoice(){voiceBuf=null;on.voice=false;render()}
+
+  function open(){loadBeats();render();}
+  return{open,render,setStyle,setVariation,setSpeed,setGroove,togglePart,dice,setVoiceFx,
+         tapCell,resetBeat,clearBeat,closeBeat,loadBeats,loadRecipe,_recipes:RECIPES,
+         record,clearVoice,toggle,start,stop,isPlaying:()=>playing,_styles:STYLES,
+         _state:()=>({styleIdx,variation,groove,speed,on:{...on},bpm:bpm(),swing:style().swing,hasVoice:!!voiceBuf})};
+})();
+
 // ═══ UI ═══
 const UI={
   getSoundsForBank(){return AppState.sounds.filter(s=>(s.bank||'Main')===AppState.activeBank).sort((a,b)=>(a.order??0)-(b.order??0))},
@@ -2353,8 +3181,8 @@ function switchMode(mode){
   // These touch storage but handle their own failures, so a dead database
   // can never block switching views.
   if(mode==='notes')Notes.render();
-  else if(mode==='songs')SongBuilder.open();
-  else if(AppState.songPlaying)SongBuilder.stop();
+  else if(mode==='songs')SongBuilder.open().then(()=>SongBuilder.applyView(AppState.songView));
+  else{if(AppState.songPlaying)SongBuilder.stop();if(typeof Studio!=='undefined'&&Studio.isPlaying())Studio.stop()}
 }
 
 function setupEvents(){
@@ -2498,6 +3326,26 @@ function setupEvents(){
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
   document.querySelectorAll('.vs-btn').forEach(b=>b.addEventListener('click',()=>SongBuilder.setView(b.dataset.view)));
+  // ── Studio (kid music maker) ──
+  const sv=document.getElementById('studioView');
+  sv.addEventListener('click',e=>{
+    const chip=e.target.closest('.st-chip');   if(chip){Studio.setStyle(+chip.dataset.style);return}
+    const v=e.target.closest('.st-var');       if(v){Studio.setVariation(v.dataset.var==='mine'?'mine':+v.dataset.var);return}
+    const rec=e.target.closest('.bb-rec');     if(rec){Studio.loadRecipe(rec.dataset.rec);return}
+    const cell=e.target.closest('.bl-cell');   if(cell){Studio.tapCell(cell.dataset.lane,+cell.dataset.step);return}
+    if(e.target.closest('#bbReset')){Studio.resetBeat();return}
+    if(e.target.closest('#bbClear')){Studio.clearBeat();return}
+    if(e.target.closest('#bbClose')){Studio.closeBeat();return}
+    const part=e.target.closest('.st-part');   if(part){Studio.togglePart(part.dataset.part);return}
+    const fx=e.target.closest('.st-fx');       if(fx){Studio.setVoiceFx(fx.dataset.fx);return}
+    if(e.target.closest('#stPlay')){Studio.toggle();return}
+    if(e.target.closest('#stDice')){Studio.dice();return}
+    if(e.target.closest('#stRecBtn')){Studio.record();return}
+  });
+  sv.addEventListener('input',e=>{
+    if(e.target.id==='stSpeed') Studio.setSpeed(e.target.value);
+    if(e.target.id==='stGroove')Studio.setGroove(e.target.value);
+  });
   document.getElementById('easySlots').addEventListener('click',e=>{const sl=e.target.closest('.easy-slot');if(sl)SongBuilder.clearSlot(+sl.dataset.slot)});
   document.getElementById('easyTray').addEventListener('click',e=>{const t=e.target.closest('.tray-item');if(t)SongBuilder.dropSound(t.dataset.id)});
   document.getElementById('easyPlayBtn').addEventListener('click',()=>SongBuilder.play());
