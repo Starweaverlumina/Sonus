@@ -367,6 +367,41 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
 .bb-btn{flex:1;min-height:44px;border-radius:10px;border:2px solid var(--surface3);background:var(--surface2);
   color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
 .bb-btn:active{transform:scale(.96)}
+/* ── visualizer ── */
+.vz-srcs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.vz-src{min-height:46px;border-radius:11px;border:2px solid var(--surface3);background:var(--surface2);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.vz-src.sel{border-color:var(--accent2);color:var(--accent2)}
+.vz-src:active{transform:scale(.96)}
+.vz-stage{position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;
+  background:#0a0a0f;border:2px solid var(--surface3)}
+.vz-stage canvas{display:block;width:100%;height:100%}
+.vz-beat{position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%;
+  background:var(--accent);opacity:.25;pointer-events:none}
+.vz-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}
+.vz-mode{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  min-height:58px;border-radius:12px;border:2px solid var(--surface3);background:var(--surface2);
+  color:var(--text2);font-size:19px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.vz-mode span{font-size:9px;font-weight:800;letter-spacing:.3px}
+.vz-mode.sel{border-color:var(--accent3);color:var(--accent3);background:rgba(123,97,255,.12)}
+.vz-mode:active{transform:scale(.95)}
+.vz-hint{font-size:11px;color:var(--text2);text-align:center;padding:11px 4px 0;font-weight:600}
+.vz-player{background:var(--surface2);border:1.5px solid var(--surface3);border-radius:12px;
+  padding:9px 11px;margin-bottom:11px}
+.vz-name{font-size:12px;font-weight:800;color:var(--accent2);margin-bottom:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vz-transport{display:flex;align-items:center;gap:9px}
+.vz-play{width:46px;height:46px;flex-shrink:0;border-radius:50%;border:none;background:var(--accent);
+  color:#fff;font-size:17px;cursor:pointer}
+.vz-play:active{transform:scale(.92)}
+#vizSeek{flex:1;min-width:0;height:34px;-webkit-appearance:none;border:none;padding:0;outline:none;
+  background:linear-gradient(var(--surface3),var(--surface3)) center/100% 6px no-repeat}
+#vizSeek::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--accent2);cursor:pointer;border:2px solid var(--surface2)}
+#vizSeek::-moz-range-thumb{width:24px;height:24px;border:2px solid var(--surface2);border-radius:50%;
+  background:var(--accent2);cursor:pointer}
+.vz-time{font-size:10px;font-weight:700;color:var(--text2);flex-shrink:0;font-variant-numeric:tabular-nums}
+#visualsView{padding:0 14px 90px}
 .st-strip{position:relative}
 .st-strip::after{content:'';position:absolute;top:0;right:0;bottom:10px;width:28px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--bg))}
 .st-styles{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;scroll-behavior:smooth}
@@ -519,6 +554,7 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <button class="mode-tab active" data-mode="pads">🎛️ Pads</button>
     <button class="mode-tab" data-mode="notes">📝 Notes</button>
     <button class="mode-tab" data-mode="songs">🎵 Songs</button>
+    <button class="mode-tab" data-mode="visuals">🌀 Visuals</button>
   </div>
   <div class="bank-bar pads-view-el" id="bankBar"></div>
   <div class="voice-bar" id="voiceBar"><div class="voice-bar-inner" id="voiceBarInner"><div class="voice-indicator"></div><div class="voice-status" id="voiceStatus">Tap mic to start...</div><span class="voice-timeout" id="voiceTimeout"></span><button class="voice-help-btn" id="voiceHelpBtn">❓</button></div></div>
@@ -738,6 +774,9 @@ header h1{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-
     <div class="modal-actions"><button class="cancel-btn" id="soundPickClose">Cancel</button></div>
   </div></div>
 
+  <div id="visualsView" style="display:none"><div id="vizPanel"></div></div>
+  <input type="file" id="vizFile" accept="audio/*" style="display:none">
+
   <!-- SLOT WORKSHOP: hold a slot for three seconds -->
   <div class="modal-overlay" id="slotSheet"><div class="modal ss-modal">
     <h2 id="slotSheetTitle">Slot</h2>
@@ -830,14 +869,14 @@ const AudioEngine=(()=>{let ctx=null;
     speechSynthesis.speak(u);bumpPlayCount(s);
     return true;
   }
-  async function play(id,vol=.8,loop=false){if(AppState.playing.has(id))return false;const s=AppState.sounds.find(x=>x.id===id);if(s&&s.tts)return playTTS(id,s,vol,loop);if(AppState.playing.size>=CONFIG.MAX_CONCURRENT)return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(c.destination);src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});bumpPlayCount(s);return true}
+  async function play(id,vol=.8,loop=false){if(AppState.playing.has(id))return false;const s=AppState.sounds.find(x=>x.id===id);if(s&&s.tts)return playTTS(id,s,vol,loop);if(AppState.playing.size>=CONFIG.MAX_CONCURRENT)return false;const buf=await getBuffer(id);if(!buf)return false;const c=getContext(),src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.loop=loop;g.gain.value=vol;src.connect(g);g.connect(out());src.onended=()=>{if(!loop||!AppState.playing.has(id)){AppState.playing.delete(id);UI.renderGrid()}};src.start(0);AppState.playing.set(id,{source:src,gainNode:g});bumpPlayCount(s);return true}
   function stop(id){const e=AppState.playing.get(id);if(!e)return;if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}AppState.playing.delete(id)}
   function stopAll(){for(const[,e]of AppState.playing){if(e.tts){try{speechSynthesis.cancel()}catch(x){}}else try{e.source.stop()}catch(x){}}AppState.playing.clear();stopScheduled()}
   function isPlaying(id){return AppState.playing.has(id)}
   function evictBuffer(id){AppState.decodedBuffers.delete(id)}
   // Play a raw buffer (for preview)
   let previewSrc=null;
-  function previewBuffer(buffer,startTime=0,duration=null){stopPreview();const c=getContext(),src=c.createBufferSource();src.buffer=buffer;src.connect(c.destination);src.start(0,startTime,duration||undefined);previewSrc=src;src.onended=()=>{previewSrc=null}}
+  function previewBuffer(buffer,startTime=0,duration=null){stopPreview();const c=getContext(),src=c.createBufferSource();src.buffer=buffer;src.connect(out());src.start(0,startTime,duration||undefined);previewSrc=src;src.onended=()=>{previewSrc=null}}
   function stopPreview(){if(previewSrc){try{previewSrc.stop()}catch(e){}previewSrc=null}}
   function generateTone(freq,type,dur){const sr=44100,len=Math.floor(sr*dur),bps=16,br=sr*bps/8,ba=bps/8,ds=len*ba;const ab=new ArrayBuffer(44+ds),v=new DataView(ab);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,br,true);v.setUint16(32,ba,true);v.setUint16(34,bps,true);ws(36,'data');v.setUint32(40,ds,true);for(let i=0;i<len;i++){const t=i/sr,env=Math.max(0,1-t/dur),ph=2*Math.PI*freq*t;let s=0;switch(type){case'sine':s=Math.sin(ph);break;case'square':s=Math.sin(ph)>0?.8:-.8;break;case'sawtooth':s=2*((freq*t)%1)-1;break;case'triangle':s=4*Math.abs(((freq*t)%1)-.5)-1;break}v.setInt16(44+i*2,Math.max(-1,Math.min(1,s*env*.5))*0x7FFF,true)}return new Blob([ab],{type:'audio/wav'})}
   // Scheduled playback for the song timeline. Deliberately separate from play():
@@ -848,6 +887,15 @@ const AudioEngine=(()=>{let ctx=null;
   let scheduled=[];
   // Accepts either a plain volume (legacy callers) or a shaping object:
   //   {volume, pitch: semitones, tone: 0..1 lowpass openness, decay: 0..1 of length}
+  // Everything the app makes passes through this one node on its way out, so
+  // the visualizer can listen to the whole app by tapping a single point
+  // instead of every sound path individually.
+  let outNode=null;
+  function out(){
+    const c=getContext();
+    if(!outNode){outNode=c.createGain();outNode.gain.value=1;outNode.connect(c.destination)}
+    return outNode;
+  }
   function playScheduled(id,volOrOpts,when){
     const o=(typeof volOrOpts==='number')?{volume:volOrOpts}:(volOrOpts||{});
     // A caller may hand us its own buffer - a warped copy - instead of the
@@ -865,7 +913,7 @@ const AudioEngine=(()=>{let ctx=null;
       f.frequency.value=Math.max(120,200*Math.pow(90,Math.max(0,o.tone)));
       src.connect(f);node=f;
     }
-    g.gain.value=vol;node.connect(g);g.connect(c.destination);
+    g.gain.value=vol;node.connect(g);g.connect(out());
     try{src.start(when)}catch(e){return null}
     if(o.decay!=null&&o.decay<1){               // shorten the tail
       const natural=buf.duration/(src.playbackRate.value||1);
@@ -884,7 +932,7 @@ const AudioEngine=(()=>{let ctx=null;
     for(const s of scheduled){try{s.stop()}catch(e){}}
     scheduled=[];
   }
-  return{getContext,decode,getBuffer,play,stop,stopAll,isPlaying,evictBuffer,previewBuffer,stopPreview,generateTone,playScheduled,stopScheduled};
+  return{getContext,out,decode,getBuffer,play,stop,stopAll,isPlaying,evictBuffer,previewBuffer,stopPreview,generateTone,playScheduled,stopScheduled};
 })();
 
 // ═══ AUDIO PROCESSING ═══
@@ -1611,6 +1659,308 @@ const SoundFX=(()=>{
     return out;
   }
   return{reverseBuffer,echoBuffer,wobbleBuffer,stutterBuffer,crushBuffer,applyAndSave};
+})();
+
+
+// ═══ VISUALIZER ═══
+// The 2000s MP3-player visualizer: the picture is made out of whatever is
+// playing. Unlike the band - which reads the scheduler, because the scheduler
+// knows every hit before it happens - a visualizer has to handle arbitrary
+// audio with no score to read ahead from, so here an AnalyserNode is not the
+// worse tool, it is the only one.
+// Written by hand on a 2D canvas rather than pulling in a WebGL MilkDrop port:
+// this app is one self-contained file with no external scripts, and everything
+// in it is synthesised rather than borrowed.
+const Viz=(()=>{
+  const MODES=[
+    {id:'bars',   icon:'📊', label:'Bars'},
+    {id:'wave',   icon:'〰️', label:'Wave'},
+    {id:'tunnel', icon:'🌀', label:'Tunnel'},
+    {id:'kaleido',icon:'🔮', label:'Kaleido'},
+    {id:'bloom',  icon:'☁️', label:'Bloom'},
+    {id:'star',   icon:'✨', label:'Stars'},
+  ];
+  const SOURCES=[
+    {id:'app',  icon:'🎹', label:'This app'},
+    {id:'file', icon:'📁', label:'A song'},
+    {id:'mic',  icon:'🎤', label:'Mic'},
+  ];
+  let mode='bars', source='app', analyser=null, freq=null, wave=null,
+      raf=null, cv=null, cx=null, W=0, H=0, hue=0, spin=0,
+      fileSrc=null, fileBuf=null, fileName='', fileStart=0, fileOffset=0,
+      filePlaying=false, micStream=null, stars=[], bassAvg=0, beatAt=0, beatHold=0, beats=0;
+
+  const ctx=()=>AudioEngine.getContext();
+
+  function ensureAnalyser(){
+    const c=ctx();
+    if(analyser)return analyser;
+    analyser=c.createAnalyser();
+    analyser.fftSize=1024;               // 512 bins: enough shape, cheap to read
+    analyser.smoothingTimeConstant=.55;   // enough to calm the picture, not
+                                          // so much that it erases transients
+    freq=new Uint8Array(analyser.frequencyBinCount);
+    wave=new Uint8Array(analyser.frequencyBinCount);
+    return analyser;
+  }
+  // Reconnect the analyser to whichever source is selected. The app tap and a
+  // decoded file both already reach the speakers, so the analyser is a listener
+  // only; the mic is deliberately NOT routed onward, or it would howl.
+  function wire(){
+    const a=ensureAnalyser();
+    try{a.disconnect()}catch(e){}
+    if(source==='app'){try{AudioEngine.out().connect(a)}catch(e){}}
+  }
+  function unwire(){
+    try{AudioEngine.out().disconnect(analyser)}catch(e){}
+  }
+
+  // ── beat detection: MilkDrop's actual secret ingredient. Compare the current
+  // bass energy against a rolling average and call a spike a beat. ──
+  function detectBeat(){
+    let bass=0;
+    for(let i=1;i<12;i++)bass+=freq[i];
+    bass/=11;
+    const now=performance.now();
+    const hit=bass>bassAvg*1.12&&bass>26&&now-beatAt>150;
+    bassAvg=bassAvg*.975+bass*.025;      // slower average = a kick can rise above it
+    if(hit){beatAt=now;beatHold=1;beats++}
+    beatHold*=.90;
+    return hit;
+  }
+
+  function resize(){
+    if(!cv)return;
+    const r=Math.min(window.devicePixelRatio||1,2);
+    const box=cv.getBoundingClientRect();
+    W=Math.max(1,Math.round(box.width*r));H=Math.max(1,Math.round(box.height*r));
+    if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+  }
+
+  // ── the six pictures ──
+  function drawBars(beat){
+    cx.fillStyle='rgba(10,10,15,.34)';cx.fillRect(0,0,W,H);
+    const n=48,bw=W/n;
+    for(let i=0;i<n;i++){
+      const v=freq[Math.floor(i*freq.length/n/2)]/255;
+      const h=v*H*.85;
+      cx.fillStyle=`hsl(${(hue+i*5)%360} 90% ${38+v*26}%)`;
+      cx.fillRect(i*bw+bw*.12,H-h,bw*.76,h);
+    }
+  }
+  function drawWave(beat){
+    cx.fillStyle='rgba(10,10,15,.28)';cx.fillRect(0,0,W,H);
+    cx.lineWidth=Math.max(2,W/220);
+    for(const dir of [1,-1]){
+      cx.beginPath();
+      cx.strokeStyle=`hsl(${(hue+(dir>0?0:150))%360} 95% 62%)`;
+      for(let i=0;i<wave.length;i++){
+        const x=i/wave.length*W, y=H/2+dir*((wave[i]-128)/128)*H*.42;
+        i?cx.lineTo(x,y):cx.moveTo(x,y);
+      }
+      cx.stroke();
+    }
+  }
+  // MilkDrop's core trick: redraw the previous frame onto itself slightly
+  // larger and rotated. That single step is what makes the image tunnel.
+  function drawTunnel(beat){
+    cx.save();
+    cx.globalAlpha=.92;
+    cx.translate(W/2,H/2);cx.rotate(.012+beatHold*.05);cx.scale(1.035,1.035);
+    cx.drawImage(cv,-W/2,-H/2,W,H);
+    cx.restore();
+    cx.globalAlpha=1;
+    cx.fillStyle='rgba(10,10,15,.10)';cx.fillRect(0,0,W,H);
+    const n=28,R=Math.min(W,H)*.16;
+    cx.lineWidth=Math.max(2,W/200);
+    cx.beginPath();
+    for(let i=0;i<=n;i++){
+      const a=i/n*Math.PI*2, v=freq[Math.floor(i*freq.length/n/2)]/255;
+      const r=R*(1+v*1.5);
+      const x=W/2+Math.cos(a+spin)*r, y=H/2+Math.sin(a+spin)*r;
+      i?cx.lineTo(x,y):cx.moveTo(x,y);
+    }
+    cx.closePath();
+    cx.strokeStyle=`hsl(${hue%360} 95% ${58+beatHold*20}%)`;cx.stroke();
+  }
+  function drawKaleido(beat){
+    cx.fillStyle='rgba(10,10,15,.20)';cx.fillRect(0,0,W,H);
+    const seg=8, R=Math.min(W,H)*.46;
+    cx.save();cx.translate(W/2,H/2);
+    for(let sIdx=0;sIdx<seg;sIdx++){
+      cx.save();
+      cx.rotate(sIdx/seg*Math.PI*2+spin);
+      if(sIdx%2)cx.scale(1,-1);                 // mirror alternate wedges
+      cx.beginPath();cx.moveTo(0,0);
+      for(let i=0;i<20;i++){
+        const v=freq[Math.floor(i*freq.length/20/2)]/255;
+        const a=i/20*(Math.PI*2/seg), r=R*(.25+v*.9);
+        cx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+      }
+      cx.closePath();
+      cx.fillStyle=`hsla(${(hue+sIdx*24)%360} 92% ${44+beatHold*22}% / .60)`;
+      cx.fill();
+      cx.restore();
+    }
+    cx.restore();
+  }
+  function drawBloom(beat){
+    cx.fillStyle='rgba(10,10,15,.22)';cx.fillRect(0,0,W,H);
+    let bass=0;for(let i=1;i<14;i++)bass+=freq[i];bass/=14/255;
+    for(let k=0;k<3;k++){
+      const t=performance.now()/1000;
+      const x=W/2+Math.cos(t*(.3+k*.17)+k*2)*W*.22;
+      const y=H/2+Math.sin(t*(.24+k*.19)+k*2)*H*.22;
+      const r=Math.min(W,H)*(.10+(bass/255)*.30+beatHold*.10);
+      const g=cx.createRadialGradient(x,y,0,x,y,Math.max(1,r));
+      g.addColorStop(0,`hsla(${(hue+k*70)%360} 95% 62% / .26)`);
+      g.addColorStop(1,'hsla(0 0% 0% / 0)');
+      cx.fillStyle=g;cx.beginPath();cx.arc(x,y,Math.max(1,r),0,7);cx.fill();
+    }
+  }
+  function drawStars(beat){
+    cx.fillStyle='rgba(10,10,15,.26)';cx.fillRect(0,0,W,H);
+    const burst=beat?26:1;
+    for(let i=0;i<burst;i++){
+      const a=Math.random()*Math.PI*2, sp=1.5+Math.random()*5.5;
+      stars.push({x:W/2,y:H/2,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+        life:1,h:(hue+Math.random()*70)%360});
+    }
+    if(stars.length>420)stars.splice(0,stars.length-420);
+    for(let i=stars.length-1;i>=0;i--){
+      const s2=stars[i];
+      s2.x+=s2.vx;s2.y+=s2.vy;s2.life-=.014;
+      if(s2.life<=0||s2.x<0||s2.x>W||s2.y<0||s2.y>H){stars.splice(i,1);continue}
+      cx.fillStyle=`hsla(${s2.h} 95% 66% / ${s2.life})`;
+      const sz=Math.max(1,W/260)*s2.life*2.2;
+      cx.fillRect(s2.x,s2.y,sz,sz);
+    }
+  }
+  const DRAW={bars:drawBars,wave:drawWave,tunnel:drawTunnel,
+              kaleido:drawKaleido,bloom:drawBloom,star:drawStars};
+
+  function frame(){
+    raf=requestAnimationFrame(frame);
+    if(!cv||document.hidden||AppState.mode!=='visuals')return;
+    resize();
+    if(!analyser)return;
+    analyser.getByteFrequencyData(freq);
+    analyser.getByteTimeDomainData(wave);
+    const beat=detectBeat();
+    hue=(hue+.35+beatHold*2.2)%360;
+    spin+=.004+beatHold*.02;
+    (DRAW[mode]||drawBars)(beat);
+    const el=document.getElementById('vizBeat');
+    if(el)el.style.opacity=(0.25+beatHold*0.75).toFixed(2);
+  }
+  function start(){if(!raf)frame()}
+  function stopLoop(){if(raf){cancelAnimationFrame(raf);raf=null}}
+
+  // ── the player half ──
+  async function pickFile(file){
+    if(!file)return;
+    try{
+      stopFile();
+      fileBuf=await AudioProcessing.decodeFile(file);
+      fileName=file.name.replace(/\.[^/.]+$/,'');
+      fileOffset=0;source='file';wire();render();playFile();
+    }catch(e){UI.showToast('Could not read that file')}
+  }
+  function playFile(){
+    if(!fileBuf)return;
+    stopFile(true);
+    const c=ctx(),a=ensureAnalyser();
+    fileSrc=c.createBufferSource();fileSrc.buffer=fileBuf;
+    fileSrc.connect(a);a.connect(AudioEngine.out());
+    fileStart=c.currentTime-fileOffset;
+    fileSrc.onended=()=>{if(filePlaying&&pos()>=fileBuf.duration-.15){filePlaying=false;fileOffset=0;render()}};
+    try{fileSrc.start(0,Math.max(0,Math.min(fileOffset,fileBuf.duration-.05)))}catch(e){}
+    filePlaying=true;render();
+  }
+  function stopFile(keepPos){
+    if(fileSrc){try{fileSrc.stop()}catch(e){}
+      try{fileSrc.disconnect()}catch(e){}fileSrc=null}
+    if(!keepPos)filePlaying=false;
+  }
+  const pos=()=>fileBuf?(filePlaying?Math.min(ctx().currentTime-fileStart,fileBuf.duration):fileOffset):0;
+  function pauseFile(){if(!filePlaying)return;fileOffset=pos();stopFile();render()}
+  function toggleFile(){if(!fileBuf)return;filePlaying?pauseFile():playFile()}
+  function seekFile(pct){
+    if(!fileBuf)return;
+    fileOffset=Math.max(0,Math.min(1,pct/100))*fileBuf.duration;
+    if(filePlaying)playFile();else render();
+  }
+  async function useMic(){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia({audio:true});
+      micStream=st;
+      const a=ensureAnalyser();
+      try{a.disconnect()}catch(e){}
+      ctx().createMediaStreamSource(st).connect(a);  // listener only: no howl
+      source='mic';render();
+    }catch(e){UI.showToast('Mic blocked — allow microphone access')}
+  }
+  function dropMic(){
+    if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
+  }
+  function setSource(id){
+    if(id===source&&id!=='file')return;
+    if(source==='mic'&&id!=='mic')dropMic();
+    if(source==='file'&&id!=='file')stopFile();
+    if(id==='mic')return useMic();
+    if(id==='file'){document.getElementById('vizFile').click();return}
+    source=id;wire();render();
+  }
+  function setMode(m){mode=m;stars=[];if(cx)cx.clearRect(0,0,W,H);render()}
+
+  const fmt=t=>{t=Math.max(0,Math.floor(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+
+  function render(){
+    const box=document.getElementById('vizPanel');
+    if(!box)return;
+    const chips=MODES.map(m=>
+      `<button class="vz-mode ${m.id===mode?'sel':''}" data-viz="${m.id}">${m.icon}<span>${m.label}</span></button>`).join('');
+    const srcs=SOURCES.map(v=>
+      `<button class="vz-src ${v.id===source?'sel':''}" data-vsrc="${v.id}">${v.icon} ${v.label}</button>`).join('');
+    const dur=fileBuf?fileBuf.duration:0;
+    const player=(source==='file'&&fileBuf)?`
+      <div class="vz-player">
+        <div class="vz-name">🎵 ${fileName}</div>
+        <div class="vz-transport">
+          <button class="vz-play" id="vizPlay">${filePlaying?'⏸':'▶'}</button>
+          <input type="range" id="vizSeek" min="0" max="100" step="0.1" value="${dur?(pos()/dur*100):0}">
+          <span class="vz-time">${fmt(pos())} / ${fmt(dur)}</span>
+        </div>
+      </div>`:'';
+    box.innerHTML=`
+      <div class="vz-srcs">${srcs}</div>
+      ${player}
+      <div class="vz-stage"><canvas id="vizCanvas"></canvas><span class="vz-beat" id="vizBeat"></span></div>
+      <div class="vz-modes">${chips}</div>
+      <div class="vz-hint">${source==='app'?'Play something in Songs or tap a pad — the picture follows it.':source==='mic'?'Sing, clap, shout.':'Pick a song from your phone.'}</div>`;
+    cv=document.getElementById('vizCanvas');
+    cx=cv?cv.getContext('2d'):null;
+    if(cx){cx.fillStyle='#0a0a0f';resize();cx.fillRect(0,0,W,H)}
+  }
+
+  let tick=null;
+  function open(){
+    render();wire();start();
+    clearInterval(tick);
+    // The scrubber only needs to move about four times a second; the picture
+    // is what runs at frame rate.
+    tick=setInterval(()=>{
+      if(AppState.mode!=='visuals'||source!=='file'||!filePlaying)return;
+      const sk=document.getElementById('vizSeek'),tm=document.querySelector('.vz-time');
+      if(sk&&fileBuf){sk.value=pos()/fileBuf.duration*100;
+        if(tm)tm.textContent=fmt(pos())+' / '+fmt(fileBuf.duration)}
+    },250);
+  }
+  function close(){stopLoop();clearInterval(tick);tick=null;unwire();stopFile();dropMic()}
+
+  return{open,close,render,setMode,setSource,pickFile,toggleFile,seekFile,
+         _modes:MODES,_beats:()=>beats,
+         _state:()=>({mode,source,playing:filePlaying,dur:fileBuf?fileBuf.duration:0,pos:pos()})};
 })();
 
 // ═══ ★ TEXT TO SPEECH ═══
@@ -2803,7 +3153,7 @@ const Studio=(()=>{
       const lim=c.createDynamicsCompressor();      // stop stacked parts clipping
       lim.threshold.value=-8;lim.knee.value=6;lim.ratio.value=12;
       lim.attack.value=.003;lim.release.value=.2;
-      master.connect(lim);lim.connect(c.destination);
+      master.connect(lim);lim.connect(AudioEngine.out());
     }
     return master;
   }
@@ -3645,8 +3995,11 @@ function switchMode(mode){
   document.getElementById('bottomBar').style.display=mode==='pads'?'':'none';
   document.getElementById('notesView').style.display=mode==='notes'?'flex':'none';
   document.getElementById('songsView').style.display=mode==='songs'?'block':'none';
+  document.getElementById('visualsView').style.display=mode==='visuals'?'block':'none';
+  if(mode!=='visuals'&&typeof Viz!=='undefined')Viz.close();
   // These touch storage but handle their own failures, so a dead database
   // can never block switching views.
+  if(mode==='visuals'){Viz.open();return}
   if(mode==='notes')Notes.render();
   else if(mode==='songs')SongBuilder.open().then(()=>SongBuilder.applyView(AppState.songView));
   else{if(AppState.songPlaying)SongBuilder.stop();if(typeof Studio!=='undefined'&&Studio.isPlaying())Studio.stop()}
@@ -3793,6 +4146,21 @@ function setupEvents(){
   document.getElementById('songStepsList').addEventListener('change',e=>{const g=e.target.closest('.ss-gap');if(g)SongBuilder.setGap(parseInt(g.dataset.idx,10),g.value)});
   document.getElementById('songLibList').addEventListener('click',e=>{const i=e.target.closest('.lib-pick-item');if(i)SongBuilder.addStep(i.dataset.id)});
   document.querySelectorAll('.vs-btn').forEach(b=>b.addEventListener('click',()=>SongBuilder.setView(b.dataset.view)));
+  // ── Visuals ──
+  (function(){
+    const panel=document.getElementById('vizPanel');
+    panel.addEventListener('click',e=>{
+      const m=e.target.closest('.vz-mode'); if(m){Viz.setMode(m.dataset.viz);return}
+      const v=e.target.closest('.vz-src');  if(v){Viz.setSource(v.dataset.vsrc);return}
+      if(e.target.closest('#vizPlay')){Viz.toggleFile();return}
+    });
+    panel.addEventListener('input',e=>{if(e.target.id==='vizSeek')Viz.seekFile(e.target.value)});
+    document.getElementById('vizFile').addEventListener('change',function(){
+      const f=this.files&&this.files[0];this.value='';Viz.pickFile(f);
+    });
+    window.addEventListener('resize',()=>{if(AppState.mode==='visuals')Viz.render()});
+  })();
+
   // ── Studio (kid music maker) ──
   const sv=document.getElementById('studioView');
   if(!document.getElementById('stVoiceFile')){
